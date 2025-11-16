@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { compareTopic, publishCommunityNote } from './services/api';
-import { TopicAnalysis, Article, ArticleSource } from './types';
+import { TopicAnalysis, Article, SegmentLabel } from './types';
 import { TrustScore } from './components/TrustScore';
 import { SegmentComparison } from './components/SegmentComparison';
 import { ArticleView } from './components/ArticleView';
@@ -13,6 +13,8 @@ function App() {
   const [wikiArticle, setWikiArticle] = useState<Article | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  type AnalysisTab = 'evidence' | 'conflicts' | 'alignments';
+  const [activeTab, setActiveTab] = useState<AnalysisTab>('evidence');
 
   const handleCompare = async () => {
     if (!topicId.trim()) return;
@@ -25,7 +27,7 @@ function App() {
 
     try {
       // First, fetch both articles separately to display them
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
       
       const [grokResponse, wikiResponse] = await Promise.all([
         fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicId.trim())}/grok`).catch(() => null),
@@ -112,16 +114,15 @@ function App() {
         {/* Results */}
         {analysis && (
           <div className="space-y-6">
-            {/* Trust Score and Summary */}
+            {/* Trust Score and Summary + Overview */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Analysis Results</h2>
                 <TrustScore score={analysis.trust_score} size="lg" />
               </div>
               <p className="text-gray-700 mb-4">{analysis.summary}</p>
-              
               {/* Label Counts */}
-              <div className="grid grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
                     {analysis.labels_count.aligned || 0}
@@ -147,8 +148,6 @@ function App() {
                   <div className="text-xs text-gray-700 mt-1">Unsupported</div>
                 </div>
               </div>
-
-              {/* Publish Button */}
               <div className="mt-6">
                 <button
                   onClick={handlePublish}
@@ -164,7 +163,7 @@ function App() {
               </div>
             </div>
 
-            {/* Side-by-Side Comparison */}
+            {/* Articles always visible */}
             {grokArticle && wikiArticle && (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Article Comparison</h3>
@@ -175,15 +174,73 @@ function App() {
               </div>
             )}
 
-            {/* Segment Comparisons */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
-                Detailed Segment Analysis
-              </h3>
-              <div className="space-y-4">
-                {analysis.segment_comparisons.map((comparison) => (
-                  <SegmentComparison key={comparison.segment_id} comparison={comparison} />
-                ))}
+            {/* Tabs: Evidence / Conflicts / Alignments */}
+            <div className="bg-white rounded-lg shadow-md">
+              <div className="flex items-center gap-6 px-6 border-b">
+                {(['evidence','conflicts','alignments'] as AnalysisTab[]).map((tab) => {
+                  const counts = analysis.labels_count || {};
+                  const total =
+                    (counts.aligned || 0) +
+                    (counts.missing_context || 0) +
+                    (counts.conflict || 0) +
+                    (counts.unsupported || 0);
+                  const label =
+                    tab === 'evidence'
+                      ? `Evidence (${total})`
+                      : tab === 'conflicts'
+                      ? `Conflicts (${counts.conflict || 0})`
+                      : `Alignments (${counts.aligned || 0})`;
+                  const isActive = activeTab === tab;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                        isActive
+                          ? 'border-purple-600 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:text-gray-800'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="p-6">
+                {activeTab === 'evidence' && (
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Detailed Segment Analysis</h3>
+                    <div className="space-y-4">
+                      {analysis.segment_comparisons.map((comparison) => (
+                        <SegmentComparison key={comparison.segment_id} comparison={comparison} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'conflicts' && (
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Conflicting Segments</h3>
+                    <div className="space-y-4">
+                      {analysis.segment_comparisons
+                        .filter((c) => c.label === SegmentLabel.CONFLICT)
+                        .map((comparison) => (
+                          <SegmentComparison key={comparison.segment_id} comparison={comparison} />
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'alignments' && (
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Aligned Segments</h3>
+                    <div className="space-y-4">
+                      {analysis.segment_comparisons
+                        .filter((c) => c.label === SegmentLabel.ALIGNED)
+                        .map((comparison) => (
+                          <SegmentComparison key={comparison.segment_id} comparison={comparison} />
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
