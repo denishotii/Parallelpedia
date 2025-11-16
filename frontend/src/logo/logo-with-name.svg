@@ -27,8 +27,8 @@
           fill="#0F172A">
       Parallel
     </text>
-    <!-- "pedia" -->
-    <text x="92" y="18"
+    <!-- "pedia" (nudged closer) -->
+    <text x="86" y="18"
           font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
           font-size="20"
           font-weight="500"

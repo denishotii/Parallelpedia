@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { compareTopic, publishCommunityNote } from './services/api';
 import { TopicAnalysis, Article, SegmentLabel } from './types';
 import { TrustScore } from './components/TrustScore';
+import logoFull from './logo/logo-with-name.svg';
 import { SegmentComparison } from './components/SegmentComparison';
 import { ArticleView } from './components/ArticleView';
 
@@ -81,7 +82,12 @@ function App() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-3xl font-bold text-gray-900">Parallelpedia</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src={logoFull} alt="Parallelpedia" className="h-10 md:h-12 w-auto" />
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">beta</span>
+            </div>
+          </div>
           <p className="text-sm text-gray-600 mt-1">
             Auditing AI encyclopedias, one article at a time.
           </p>

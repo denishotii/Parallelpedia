@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="frontend/src/logo/logo-with-name.svg" alt="Parallelpedia" height="56" />
+  <br />
+  <sub><em>beta</em></sub>
+</p>
+
 # Parallelpedia
 
 **Auditing AI encyclopedias, one article at a time.**
@@ -98,6 +104,8 @@ npm run dev
 ```
 
 Frontend will be available at `http://localhost:5173`
+<br />
+Open the landing page at `/` and click “Open Live App” or go directly to `/app`.
 
 ### DKG Node Setup
 

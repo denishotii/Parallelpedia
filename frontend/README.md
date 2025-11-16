@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="./src/logo/logo-with-name.svg" alt="Parallelpedia" height="56" />
+  <br />
+  <sub><em>beta</em></sub>
+</p>
+
 # Parallelpedia Frontend
 
 React + Vite + TypeScript frontend for Parallelpedia.
