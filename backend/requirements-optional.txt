@@ -1,0 +1,7 @@
+# Optional dependencies for enhanced features
+# Install with: pip install -r requirements-optional.txt
+
+# OpenAI SDK for advanced LLM-based comparison
+# Requires OPENAI_API_KEY environment variable
+openai==1.12.0
+

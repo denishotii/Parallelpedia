@@ -1,0 +1,2 @@
+"""Parallelpedia backend application."""
+

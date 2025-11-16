@@ -1,0 +1,6 @@
+# Ensure consistent line endings
+* text=auto
+
+# DKG Node plugin files
+dkg-node/packages/plugin-parallelpedia/** text eol=lf
+

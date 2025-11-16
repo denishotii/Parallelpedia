@@ -1,0 +1,23 @@
+.env
+# DKG Node: Include plugin and modified files, exclude build artifacts
+/dkg-node/node_modules/
+/dkg-node/apps/agent/node_modules/
+/dkg-node/apps/agent/dist/
+/dkg-node/apps/agent/dkg.db
+/dkg-node/apps/agent/.env
+/dkg-node/apps/agent/.env.development.local
+/dkg-node/apps/agent/data/
+/dkg-node/packages/*/node_modules/
+/dkg-node/packages/*/dist/
+/dkg-node/packages/plugin-parallelpedia/.turbo/
+/dkg-node/.turbo/
+/dkg-node/dkg-engine/
+/dkg-node/docs/
+backend/venv/
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+frontend/node_modules/
+frontend/dist/
+frontend/.env
