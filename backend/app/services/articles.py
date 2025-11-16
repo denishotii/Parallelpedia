@@ -66,42 +66,43 @@ class ArticleService:
                     url=None
                 )
         
-        # Option 1b: Try to locate a KA by topicId via SPARQL and fetch it
-        try:
-            ual = await self.dkg_client.find_grok_article_ual(topic_id)
-            if ual:
-                asset = await self.dkg_client.get_asset(ual)
-                if asset:
-                    # Heuristic extraction: handle common KA shapes
-                    public = asset.get("public") or asset  # many DKG assets wrap data in "public"
-                    title = (
-                        public.get("grokTitle")
-                        or public.get("title")
-                        or public.get("name")
-                        or topic_id.replace("_", " ").title()
-                    )
-                    raw_text = (
-                        public.get("content")
-                        or public.get("content_text")
-                        or public.get("articleBody")
-                        or public.get("text")
-                        or ""
-                    )
-                    # Some assets store arrays of sections
-                    if not raw_text and isinstance(public.get("sections"), list):
-                        raw_text = "\n\n".join(
-                            s.get("text", "") for s in public["sections"] if isinstance(s, dict)
+        # Option 1b: Try to locate a KA by topicId via SPARQL and fetch it (guarded by env)
+        if os.getenv("ENABLE_DKG_LOOKUP", "1") == "1":
+            try:
+                ual = await self.dkg_client.find_grok_article_ual(topic_id)
+                if ual:
+                    asset = await self.dkg_client.get_asset(ual)
+                    if asset:
+                        # Heuristic extraction: handle common KA shapes
+                        public = asset.get("public") or asset  # many DKG assets wrap data in "public"
+                        title = (
+                            public.get("grokTitle")
+                            or public.get("title")
+                            or public.get("name")
+                            or topic_id.replace("_", " ").title()
                         )
-                    if raw_text and len(raw_text.strip()) > 100:
-                        return Article(
-                            topic_id=topic_id,
-                            title=title,
-                            source=ArticleSource.GROK,
-                            raw_text=raw_text,
-                            url=None
+                        raw_text = (
+                            public.get("content")
+                            or public.get("content_text")
+                            or public.get("articleBody")
+                            or public.get("text")
+                            or ""
                         )
-        except Exception as e:
-            print(f"DKG lookup failed for {topic_id}: {e}")
+                        # Some assets store arrays of sections
+                        if not raw_text and isinstance(public.get("sections"), list):
+                            raw_text = "\n\n".join(
+                                s.get("text", "") for s in public["sections"] if isinstance(s, dict)
+                            )
+                        if raw_text and len(raw_text.strip()) > 100:
+                            return Article(
+                                topic_id=topic_id,
+                                title=title,
+                                source=ArticleSource.GROK,
+                                raw_text=raw_text,
+                                url=None
+                            )
+            except Exception as e:
+                print(f"DKG lookup failed for {topic_id}: {e}")
         
         # Option 2: Try unofficial Grokipedia JSON API (if available)
         try:

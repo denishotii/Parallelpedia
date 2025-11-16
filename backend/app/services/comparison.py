@@ -1,4 +1,5 @@
 """Service for comparing Grokipedia and Wikipedia articles."""
+import os
 import re
 from typing import List
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -24,7 +25,9 @@ class ComparisonService:
             llm_client: LLM client for advanced comparisons
         """
         self.llm_client = llm_client
-        self.vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
+        self.vectorizer = TfidfVectorizer(max_features=3000, stop_words='english')
+        # Cap sentences per article to keep runtime bounded (can be tuned via env)
+        self.max_segments_per_article = int(os.getenv("COMPARE_MAX_SEGMENTS", "300"))
     
     def _split_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences."""
@@ -123,6 +126,24 @@ class ComparisonService:
             # Very low similarity - unsupported
             return SegmentLabel.UNSUPPORTED, max_sim, []
     
+    def _classify_with_best(
+        self,
+        grok_segment: str,
+        best_wiki_segment: str,
+        max_similarity: float,
+        similarity_threshold: float = 0.3
+    ) -> tuple[SegmentLabel, float, List[str]]:
+        """Classify using a precomputed best match and similarity score."""
+        if max_similarity >= 0.7:
+            return SegmentLabel.ALIGNED, max_similarity, [best_wiki_segment] if best_wiki_segment else []
+        if max_similarity >= similarity_threshold:
+            return SegmentLabel.MISSING_CONTEXT, max_similarity, [best_wiki_segment] if best_wiki_segment else []
+        if max_similarity > 0.1:
+            if self._has_conflicting_facts(grok_segment, best_wiki_segment or ""):
+                return SegmentLabel.CONFLICT, max_similarity, [best_wiki_segment] if best_wiki_segment else []
+            return SegmentLabel.MISSING_CONTEXT, max_similarity, [best_wiki_segment] if best_wiki_segment else []
+        return SegmentLabel.UNSUPPORTED, max_similarity, []
+    
     def _has_conflicting_facts(self, text1: str, text2: str) -> bool:
         """
         Simple heuristic to detect conflicting facts.
@@ -213,21 +234,61 @@ class ComparisonService:
         grok_segments = self._split_into_sentences(grok_text)
         wiki_segments = self._split_into_sentences(wiki_text)
         
-        # Compare each Grokipedia segment
+        # Bound the number of segments to avoid quadratic blowups
+        if len(grok_segments) > self.max_segments_per_article:
+            grok_segments = grok_segments[: self.max_segments_per_article]
+        if len(wiki_segments) > self.max_segments_per_article:
+            wiki_segments = wiki_segments[: self.max_segments_per_article]
+        
+        # Fast path: if either side is empty after filtering
+        if not grok_segments or not wiki_segments:
+            return TopicAnalysis(
+                topic_id=grok_article.topic_id,
+                grok_title=grok_article.title,
+                wiki_title=wiki_article.title,
+                trust_score=0.0,
+                summary="No content to compare.",
+                segment_comparisons=[],
+                labels_count={
+                    SegmentLabel.ALIGNED: 0,
+                    SegmentLabel.MISSING_CONTEXT: 0,
+                    SegmentLabel.CONFLICT: 0,
+                    SegmentLabel.UNSUPPORTED: 0,
+                },
+            )
+        
+        # Vectorize once and compute all pairwise similarities for efficiency
+        # Fit on combined corpus to share vocabulary
+        corpus = wiki_segments + grok_segments
+        tfidf = self.vectorizer.fit_transform(corpus)
+        wiki_matrix = tfidf[: len(wiki_segments)]
+        grok_matrix = tfidf[len(wiki_segments) :]
+        
+        # Compute cosine similarity matrix: [num_grok, num_wiki]
+        sim_matrix = cosine_similarity(grok_matrix, wiki_matrix)
+        
+        # Compare each Grokipedia segment using best match from similarity matrix
         comparisons = []
         for idx, grok_seg in enumerate(grok_segments):
-            label, similarity, matched = self._classify_segment(
-                grok_seg,
-                wiki_segments
+            row = sim_matrix[idx]
+            if row.size == 0:
+                label, similarity, matched = SegmentLabel.UNSUPPORTED, 0.0, []
+            else:
+                best_idx = row.argmax()
+                max_sim = float(row[best_idx])
+                best_match = wiki_segments[best_idx] if 0 <= best_idx < len(wiki_segments) else ""
+                label, similarity, matched = self._classify_with_best(
+                    grok_seg, best_match, max_sim
+                )
+            comparisons.append(
+                SegmentComparison(
+                    segment_id=f"{grok_article.topic_id}_seg_{idx}",
+                    text=grok_seg,
+                    label=label,
+                    similarity_score=similarity,
+                    matched_wiki_sentences=matched,
+                )
             )
-            
-            comparisons.append(SegmentComparison(
-                segment_id=f"{grok_article.topic_id}_seg_{idx}",
-                text=grok_seg,
-                label=label,
-                similarity_score=similarity,
-                matched_wiki_sentences=matched
-            ))
         
         # Calculate trust score
         trust_score = self._calculate_trust_score(comparisons)
