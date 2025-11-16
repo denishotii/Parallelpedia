@@ -8,6 +8,8 @@ numpy==1.26.3
 scikit-learn==1.4.0
 beautifulsoup4==4.12.2
 lxml==5.1.0
+# Wikipedia API wrapper for complete article retrieval
+wikipedia-api==0.8.1
 # Optional: For advanced LLM-based comparison features
 # Uncomment the line below if you want to use OpenAI embeddings/comparison
 # openai==1.12.0

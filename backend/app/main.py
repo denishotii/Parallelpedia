@@ -172,8 +172,34 @@ async def publish_community_note(topic_id: str):
         wiki_title=analysis.wiki_title
     )
     
+    # Build provenance with simple input hash
+    try:
+        import hashlib
+        payload_for_hash = {
+            "topic_id": topic_id,
+            "grok_title": analysis.grok_title,
+            "wiki_title": analysis.wiki_title,
+            "labels_count": analysis.labels_count,
+            "trust_score": analysis.trust_score,
+        }
+        input_hash = hashlib.sha256(
+            str(payload_for_hash).encode("utf-8")
+        ).hexdigest()
+    except Exception:
+        input_hash = None
+    
+    provenance = {
+        "createdBy": "Parallelpedia",
+        "version": "1.0.0",
+        "inputHash": input_hash,
+        "sources": {
+            "grokUrl": grok_article.url,
+            "wikiUrl": wiki_article.url,
+        },
+    }
+    
     # Publish to DKG
-    asset_id = await dkg_client.publish_community_note(community_note)
+    asset_id = await dkg_client.publish_community_note(community_note, provenance=provenance)
     
     if not asset_id:
         raise HTTPException(status_code=500, detail="Failed to publish to DKG")

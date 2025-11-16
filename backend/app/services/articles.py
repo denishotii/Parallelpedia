@@ -4,6 +4,10 @@ import os
 from typing import Optional
 from app.models import Article, ArticleSource
 from app.services.dkg_client import DKGClient
+try:
+    import wikipediaapi  # type: ignore
+except Exception:
+    wikipediaapi = None  # Optional dependency; fall back to HTTP methods if missing
 
 
 class ArticleService:
@@ -25,13 +29,24 @@ class ArticleService:
             }
         )
         self.wikipedia_api_base = "https://en.wikipedia.org/api/rest_v1"
+        # Wikipedia-API client (provides complete text, sections, etc.) if available
+        self.wiki_api = None
+        if wikipediaapi is not None:
+            try:
+                self.wiki_api = wikipediaapi.Wikipedia(
+                    user_agent="Parallelpedia/1.0 (contact@example.com)",
+                    language="en",
+                    extract_format=wikipediaapi.ExtractFormat.WIKI
+                )
+            except Exception:
+                self.wiki_api = None
         # Optional unofficial Grokipedia API base (e.g., https://grokipedia-api.com)
         # If set, we'll try it first before scraping HTML
         self.grok_api_base = os.getenv("GROKIPEDIA_API_BASE", "https://grokipedia-api.com")
     
     async def get_grok_article(self, topic_id: str) -> Optional[Article]:
         """
-        Fetch a Grokipedia article from Grokipedia website.
+        Fetch a Grokipedia article, preferring DKG Knowledge Assets, then API/scrape.
         
         Args:
             topic_id: Topic identifier (article title/slug)
@@ -50,6 +65,43 @@ class ArticleService:
                     raw_text=asset.get("content", ""),
                     url=None
                 )
+        
+        # Option 1b: Try to locate a KA by topicId via SPARQL and fetch it
+        try:
+            ual = await self.dkg_client.find_grok_article_ual(topic_id)
+            if ual:
+                asset = await self.dkg_client.get_asset(ual)
+                if asset:
+                    # Heuristic extraction: handle common KA shapes
+                    public = asset.get("public") or asset  # many DKG assets wrap data in "public"
+                    title = (
+                        public.get("grokTitle")
+                        or public.get("title")
+                        or public.get("name")
+                        or topic_id.replace("_", " ").title()
+                    )
+                    raw_text = (
+                        public.get("content")
+                        or public.get("content_text")
+                        or public.get("articleBody")
+                        or public.get("text")
+                        or ""
+                    )
+                    # Some assets store arrays of sections
+                    if not raw_text and isinstance(public.get("sections"), list):
+                        raw_text = "\n\n".join(
+                            s.get("text", "") for s in public["sections"] if isinstance(s, dict)
+                        )
+                    if raw_text and len(raw_text.strip()) > 100:
+                        return Article(
+                            topic_id=topic_id,
+                            title=title,
+                            source=ArticleSource.GROK,
+                            raw_text=raw_text,
+                            url=None
+                        )
+        except Exception as e:
+            print(f"DKG lookup failed for {topic_id}: {e}")
         
         # Option 2: Try unofficial Grokipedia JSON API (if available)
         try:
@@ -218,174 +270,56 @@ class ArticleService:
     
     async def get_wiki_article(self, topic_id: str) -> Optional[Article]:
         """
-        Fetch a Wikipedia article with full content.
-        
-        Args:
-            topic_id: Topic identifier (Wikipedia article title)
-            
-        Returns:
-            Article object or None if not found
+        Fetch a Wikipedia article using Wikimedia REST v1 HTML and return plain text.
         """
         try:
-            # Normalize title
-            title = topic_id.replace("_", " ")
             import urllib.parse
-            encoded_title = urllib.parse.quote(title)
+            normalized_title = topic_id.replace("_", " ")
+            candidates = [
+                urllib.parse.quote(topic_id),            # Underscored form
+                urllib.parse.quote(normalized_title),    # Spaced form
+            ]
 
-            # 0) Force full article via Wikimedia Core REST API (HTML)
-            # https://api.wikimedia.org/core/v1/wikipedia/en/page/{title}/html
-            core_html = await self.http_client.get(
-                f"https://api.wikimedia.org/core/v1/wikipedia/en/page/{encoded_title}/html",
-                follow_redirects=True
-            )
-            if core_html.status_code == 200 and core_html.text:
-                try:
-                    from bs4 import BeautifulSoup
-                    soup = BeautifulSoup(core_html.text, "html.parser")
-                    # Remove non-content elements
-                    for el in soup(["script", "style", "nav", "header", "footer", "aside", "figure", "figcaption"]):
-                        el.decompose()
-
-                    parts: list[str] = []
-                    for node in soup.find_all(["h1","h2","h3","h4","p","ul","ol","table"]):
-                        name = node.name or ""
-                        if name in {"h1","h2","h3","h4"}:
-                            txt = node.get_text(" ", strip=True)
-                            if txt:
-                                parts.append(f"\n\n{txt}\n")
-                        elif name in {"ul","ol"}:
-                            items = [li.get_text(" ", strip=True) for li in node.find_all("li")]
-                            if items:
-                                parts.append("\n" + "\n".join(f"• {it}" for it in items))
-                        elif name == "table":
-                            cells = [c.get_text(" ", strip=True) for c in node.find_all(["th","td"])][:60]
-                            if cells:
-                                parts.append("\n" + " | ".join(cells))
-                        else:
-                            txt = node.get_text(" ", strip=True)
-                            if txt:
-                                parts.append(txt)
-
-                    text = "\n".join(parts).strip()
-                    if text and len(text) > 500:
-                        wiki_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}"
-                        return Article(
-                            topic_id=topic_id,
-                            title=title,
-                            source=ArticleSource.WIKIPEDIA,
-                            raw_text=text,
-                            url=wiki_url
-                        )
-                except Exception:
-                    pass
-
-            # 1) Preferred: REST mobile-html → extract rich full text (headings, paragraphs, lists, table text)
-            mobile_html = await self.http_client.get(
-                f"{self.wikipedia_api_base}/page/mobile-html/{encoded_title}",
-                follow_redirects=True
-            )
-            if mobile_html.status_code == 200 and mobile_html.text:
-                try:
-                    from bs4 import BeautifulSoup
-                    soup = BeautifulSoup(mobile_html.text, "html.parser")
-                    # Remove non-content elements
-                    for el in soup(["script", "style", "nav", "header", "footer", "aside", "figure", "figcaption"]):
-                        el.decompose()
-
-                    parts: list[str] = []
-                    # Collect content in reading order: headings, paragraphs, lists, simple table text
-                    for node in soup.find_all(["h1","h2","h3","h4","p","ul","ol","table"]):
-                        name = node.name or ""
-                        if name in {"h1","h2","h3","h4"}:
-                            txt = node.get_text(" ", strip=True)
-                            if txt:
-                                parts.append(f"\n\n{txt}\n")
-                        elif name in {"ul","ol"}:
-                            items = [li.get_text(" ", strip=True) for li in node.find_all("li")]
-                            if items:
-                                parts.append("\n" + "\n".join(f"• {it}" for it in items))
-                        elif name == "table":
-                            # Extract simple cell texts to avoid losing key facts
-                            cells = [c.get_text(" ", strip=True) for c in node.find_all(["th","td"])][:60]
-                            if cells:
-                                parts.append("\n" + " | ".join(cells))
-                        else:  # paragraph or other
-                            txt = node.get_text(" ", strip=True)
-                            if txt:
-                                parts.append(txt)
-
-                    text = "\n".join(parts).strip()
-                    if text and len(text) > 500:
-                        wiki_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}"
-                        return Article(
-                            topic_id=topic_id,
-                            title=title,
-                            source=ArticleSource.WIKIPEDIA,
-                            raw_text=text,
-                            url=wiki_url
-                        )
-                except Exception as _:
-                    pass
-
-            # 2) Fallback: REST plain text (entire article in plain text)
-            plain_resp = await self.http_client.get(
-                f"{self.wikipedia_api_base}/page/plain/{encoded_title}",
-                follow_redirects=True
-            )
-            if plain_resp.status_code == 200 and plain_resp.text and len(plain_resp.text.strip()) > 200:
-                wiki_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}"
-                return Article(
-                    topic_id=topic_id,
-                    title=title,
-                    source=ArticleSource.WIKIPEDIA,
-                    raw_text=plain_resp.text,
-                    url=wiki_url
+            for encoded in candidates:
+                url = f"https://en.wikipedia.org/api/rest_v1/page/html/{encoded}"
+                resp = await self.http_client.get(
+                    url,
+                    follow_redirects=True,
+                    headers = {
+                        "Accept": 'text/html; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/HTML/2.1.0"',
+                        "User-Agent": "ParallelPedia/1.0 (denishoti18@gmail.com)",
+                    }
                 )
+                if resp.status_code != 200 or not resp.text:
+                    continue
 
-            # 3) Last resort: MediaWiki extracts API (plaintext)
-            mediawiki_url = "https://en.wikipedia.org/w/api.php"
-            params = {
-                "action": "query",
-                "format": "json",
-                "titles": title,
-                "prop": "extracts",
-                "explaintext": "true",
-                "exintro": "false",
-                "exsectionformat": "plain",
-            }
-            wiki_response = await self.http_client.get(mediawiki_url, params=params)
-            wiki_response.raise_for_status()
-            wiki_data = wiki_response.json()
+                # Parse HTML and extract readable text
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(resp.text, "html.parser")
+                body = soup.find("body") or soup
+                # Remove obvious non-content elements
+                for el in body(["script", "style", "nav", "header", "footer", "aside"]):
+                    el.decompose()
+                # Prefer page title from h1 if present
+                page_title_elem = body.find("h1")
+                page_title = (page_title_elem.get_text(" ", strip=True) if page_title_elem else normalized_title)
+                # Extract plain text with basic normalization
+                text = body.get_text("\n", strip=True)
+                text = "\n".join(line for line in (l.strip() for l in text.splitlines()) if line)
 
-            pages = wiki_data.get("query", {}).get("pages", {})
-            page_content = ""
-            page_title = title
-            for page_id, page_data in pages.items():
-                if int(page_id) < 0:
-                    return None
-                page_content = page_data.get("extract", "")
-                page_title = page_data.get("title", title)
-                break
+                if text and len(text) >= 50:
+                    wiki_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(page_title.replace(' ', '_'))}"
+                    return Article(
+                        topic_id=topic_id,
+                        title=page_title,
+                        source=ArticleSource.WIKIPEDIA,
+                        raw_text=text,
+                        url=wiki_url,
+                    )
 
-            if not page_content or len(page_content.strip()) < 50:
-                return None
-
-            wiki_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(page_title.replace(' ', '_'))}"
-            return Article(
-                topic_id=topic_id,
-                title=page_title,
-                source=ArticleSource.WIKIPEDIA,
-                raw_text=page_content,
-                url=wiki_url
-            )
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return None
-            raise
+            return None
         except Exception as e:
             print(f"Error fetching Wikipedia article for {topic_id}: {e}")
-            import traceback
-            traceback.print_exc()
             return None
     
     async def close(self):

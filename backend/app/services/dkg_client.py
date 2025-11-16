@@ -18,6 +18,51 @@ class DKGClient:
         self.base_url = base_url or os.getenv("DKG_BASE_URL", "http://localhost:9200")
         self.client = httpx.AsyncClient(timeout=30.0)
     
+    async def find_grok_article_ual(self, topic_id: str) -> Optional[str]:
+        """
+        Try to find a Grokipedia article Knowledge Asset by topic_id via SPARQL.
+        
+        This is schema-agnostic but tries common predicates:
+        - schema:topicId
+        - schema:name / schema:about
+        - parallelpedia namespace if available
+        """
+        prefixes = """
+          PREFIX schema: <https://schema.org/>
+          PREFIX parallelpedia: <https://parallelpedia.org/schema/>
+        """
+        # Prefer explicit topicId match
+        candidates = [
+            f"""
+            {prefixes}
+            SELECT ?asset ?ual WHERE {{
+              ?asset schema:topicId "{topic_id}" .
+              OPTIONAL {{ ?asset schema:identifier ?ual . }}
+            }}
+            LIMIT 1
+            """,
+            f"""
+            {prefixes}
+            SELECT ?asset ?ual WHERE {{
+              ?asset schema:name "{topic_id.replace("_", " ")}" .
+              OPTIONAL {{ ?asset schema:identifier ?ual . }}
+            }}
+            LIMIT 1
+            """,
+        ]
+        for q in candidates:
+            try:
+                result = await self.query_sparql(q)
+                rows = (result or {}).get("data") or []
+                if rows:
+                    row = rows[0]
+                    ual = (row.get("ual") or {}).get("value") or (row.get("asset") or {}).get("value")
+                    if ual:
+                        return ual
+            except Exception:
+                continue
+        return None
+    
     async def get_asset(self, ual: str) -> Optional[dict]:
         """
         Get a Knowledge Asset by UAL.
@@ -61,12 +106,13 @@ class DKGClient:
             print(f"Error executing SPARQL query: {e}")
             return None
     
-    async def publish_community_note(self, note: CommunityNote) -> Optional[str]:
+    async def publish_community_note(self, note: CommunityNote, provenance: Optional[dict] = None) -> Optional[str]:
         """
         Publish a Community Note as a Knowledge Asset.
         
         Args:
             note: CommunityNote to publish
+            provenance: Optional provenance metadata to include in the asset
             
         Returns:
             UAL (Unique Asset Locator) if successful, None otherwise
@@ -102,7 +148,8 @@ class DKGClient:
                     "labelsCount": note.labels_count,
                     "keyExamples": note.key_examples,
                     "grokTitle": note.grok_title,
-                    "wikiTitle": note.wiki_title
+                    "wikiTitle": note.wiki_title,
+                    "provenance": provenance or {}
                 }
             )
             response.raise_for_status()
