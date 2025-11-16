@@ -296,17 +296,67 @@ class ArticleService:
 
                 # Parse HTML and extract readable text
                 from bs4 import BeautifulSoup
+                import re
                 soup = BeautifulSoup(resp.text, "html.parser")
                 body = soup.find("body") or soup
                 # Remove obvious non-content elements
                 for el in body(["script", "style", "nav", "header", "footer", "aside"]):
                     el.decompose()
+                # Remove non-article chrome and noisy blocks (infoboxes, navboxes, references, etc.)
+                noise_selectors = [
+                    ".infobox",
+                    "#toc",
+                    ".toc",
+                    ".hatnote",
+                    ".shortdescription",
+                    ".metadata",
+                    ".navbox",
+                    ".vertical-navbox",
+                    ".ambox",
+                    ".mbox",
+                    ".sisterproject",
+                    ".gallery",
+                    ".thumb",
+                    ".mw-references-wrap",
+                    ".reflist",
+                    "ol.references",
+                    "sup.reference",
+                    "span.mw-editsection",
+                    "figure",
+                    "figcaption",
+                    "table",  # drop tables for cleaner text comparison
+                    "footer",
+                ]
+                for sel in noise_selectors:
+                    for el in body.select(sel):
+                        el.decompose()
                 # Prefer page title from h1 if present
                 page_title_elem = body.find("h1")
                 page_title = (page_title_elem.get_text(" ", strip=True) if page_title_elem else normalized_title)
-                # Extract plain text with basic normalization
-                text = body.get_text("\n", strip=True)
-                text = "\n".join(line for line in (l.strip() for l in text.splitlines()) if line)
+                # Extract only main content sections (Parsoid sections have data-mw-section-id)
+                parts: list[str] = []
+                sections = body.find_all(attrs={"data-mw-section-id": True}) or [body]
+                for sec in sections:
+                    # Keep headings and paragraphs/lists only
+                    for node in sec.find_all(["h2", "h3", "h4", "p", "ul", "ol"]):
+                        if node.name in {"h2", "h3", "h4"}:
+                            txt = node.get_text(" ", strip=True)
+                            if txt:
+                                parts.append(txt)
+                        elif node.name in {"ul", "ol"}:
+                            items = [li.get_text(" ", strip=True) for li in node.find_all("li")]
+                            if items:
+                                parts.append(" ".join(items))
+                        else:
+                            txt = node.get_text(" ", strip=True)
+                            if txt:
+                                parts.append(txt)
+                text = " ".join(parts) if parts else body.get_text(" ", strip=True)
+                # Normalization: remove citations and collapse whitespace
+                text = re.sub(r"\[\s*\d+\s*\]", "", text)  # remove numeric citations
+                text = re.sub(r"\[\s*citation needed\s*\]", "", text, flags=re.IGNORECASE)
+                text = re.sub(r"\s{2,}", " ", text)  # collapse multiple spaces
+                text = text.strip()
 
                 if text and len(text) >= 50:
                     wiki_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(page_title.replace(' ', '_'))}"
