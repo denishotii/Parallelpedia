@@ -1,5 +1,6 @@
 """DKG client for interacting with OriginTrail DKG."""
 import os
+import json
 import httpx
 from typing import Optional
 from app.models import CommunityNote
@@ -172,10 +173,27 @@ class DKGClient:
                 print(f"[DKG publish] HTTP error {http_err.response.status_code}: {body_text}")
                 return None
             result = response.json()
-            if result.get("success") and result.get("ual"):
-                return result["ual"]
+            
+            # Log the full response from DKG node server
+            print("=" * 80)
+            print("[DKG publish] Full response from DKG node server:")
+            print(json.dumps(result, indent=2))
+            print("=" * 80)
+            
+            # Extract UAL from response
+            ual = result.get("ual") or result.get("UAL") or result.get("asset_id")
+            
+            if result.get("success") and ual:
+                print(f"✅ [DKG publish] SUCCESS! Community Note published with UAL: {ual}")
+                print(f"📋 [DKG publish] UAL (Unique Asset Locator): {ual}")
+                print(f"🔗 [DKG publish] Verify asset: GET http://localhost:9200/api/dkg/assets?ual={ual}")
+                return ual
+            
             # Log any error from plugin
-            print(f"[DKG publish] Failed: {result}")
+            print(f"❌ [DKG publish] Failed: {result}")
+            if not result.get("success"):
+                error_msg = result.get("error", "Unknown error")
+                print(f"   Error message: {error_msg}")
             return None
         except httpx.ReadTimeout as e:
             print(f"[DKG publish] ReadTimeout: The DKG node server took too long to respond.")

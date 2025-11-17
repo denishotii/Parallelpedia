@@ -199,15 +199,27 @@ async def publish_community_note(topic_id: str):
     }
     
     # Publish to DKG
+    print(f"\n{'='*80}")
+    print(f"🚀 [Backend] Publishing Community Note for topic: {topic_id}")
+    print(f"{'='*80}\n")
+    
     asset_id = await dkg_client.publish_community_note(community_note, provenance=provenance)
     
     if not asset_id:
         raise HTTPException(status_code=500, detail="Failed to publish to DKG")
     
+    print(f"\n{'='*80}")
+    print(f"✅ [Backend] Community Note published successfully!")
+    print(f"📋 [Backend] UAL (Unique Asset Locator): {asset_id}")
+    print(f"🔗 [Backend] Verify asset: GET http://localhost:9200/api/dkg/assets?ual={asset_id}")
+    print(f"{'='*80}\n")
+    
     return {
         "success": True,
+        "ual": asset_id,  # Also include as 'ual' for consistency
         "asset_id": asset_id,
-        "community_note": community_note.model_dump()
+        "community_note": community_note.model_dump(),
+        "verification_url": f"http://localhost:9200/api/dkg/assets?ual={asset_id}"
     }
 
 
