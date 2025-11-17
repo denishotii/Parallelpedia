@@ -92,19 +92,92 @@ class LLMClient:
         else:
             raise ValueError(f"Batch embeddings not supported for provider {self.provider}")
     
+    def check_topic_relevance(
+        self,
+        grok_segment: str,
+        wiki_segment: str
+    ) -> Dict:
+        """
+        Use GPT to check if two segments are about the same topic BEFORE detailed comparison.
+        This prevents false conflicts from unrelated paragraphs.
+        
+        Args:
+            grok_segment: Segment from Grokipedia
+            wiki_segment: Segment from Wikipedia
+            
+        Returns:
+            Dictionary with is_relevant (bool), relevance_score (float), and topic_summary
+        """
+        if not self.client:
+            return {
+                "is_relevant": True,  # Assume relevant if LLM not available
+                "relevance_score": 0.5,
+                "topic_summary": "LLM not available"
+            }
+        
+        prompt = f"""You are a topic relevance checker. Determine if these two text segments are about the SAME TOPIC.
+
+GROKIPEDIA SEGMENT:
+{grok_segment[:500]}
+
+WIKIPEDIA SEGMENT:
+{wiki_segment[:500]}
+
+CRITICAL: Only return "is_relevant": true if both segments discuss the SAME specific topic, person, event, or concept.
+If they discuss different topics (e.g., "Early Life" vs "Career", "History" vs "Current Status"), return "is_relevant": false.
+
+Return JSON with:
+1. "is_relevant": boolean - true ONLY if same topic
+2. "relevance_score": float 0.0-1.0 (1.0 = same topic, 0.0 = completely different topics)
+3. "topic_summary": Brief description of what topic(s) each segment discusses
+4. "reason": Why they are/aren't about the same topic
+
+Return ONLY valid JSON, no other text."""
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a precise topic relevance checker. Always return valid JSON. Be strict: only mark as relevant if truly the same topic."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            
+            return {
+                "is_relevant": bool(result.get("is_relevant", False)),
+                "relevance_score": float(result.get("relevance_score", 0.0)),
+                "topic_summary": result.get("topic_summary", ""),
+                "reason": result.get("reason", "")
+            }
+        except Exception as e:
+            print(f"Topic relevance check error: {e}")
+            return {
+                "is_relevant": True,  # Default to relevant on error
+                "relevance_score": 0.5,
+                "topic_summary": f"Error: {str(e)}",
+                "reason": "Error during topic check"
+            }
+    
     def classify_segment_relationship(
         self, 
         grok_segment: str, 
         wiki_segment: str,
-        context: Optional[str] = None
+        context: Optional[str] = None,
+        topic_relevance: Optional[Dict] = None
     ) -> Dict:
         """
         Use GPT-4 to intelligently classify the relationship between two text segments.
+        Now includes topic relevance checking to avoid false conflicts.
         
         Args:
             grok_segment: Segment from Grokipedia
             wiki_segment: Segment from Wikipedia
             context: Optional surrounding context
+            topic_relevance: Optional pre-computed topic relevance check result
             
         Returns:
             Dictionary with label, confidence, explanation, and detected_issues
@@ -118,9 +191,19 @@ class LLMClient:
                 "detected_issues": []
             }
         
+        # Build context about topic relevance
+        topic_info = ""
+        if topic_relevance:
+            if not topic_relevance.get("is_relevant", True):
+                topic_info = f"\n⚠️ TOPIC RELEVANCE WARNING: These segments appear to be about DIFFERENT topics.\n"
+                topic_info += f"Grokipedia topic: {topic_relevance.get('topic_summary', 'Unknown')}\n"
+                topic_info += f"Reason: {topic_relevance.get('reason', '')}\n"
+                topic_info += f"DO NOT mark as 'conflict' - mark as 'unsupported' instead.\n"
+        
         prompt = f"""You are an expert fact-checker comparing AI-generated content (Grokipedia) with Wikipedia.
 
-Analyze the relationship between these two text segments:
+FIRST: Check if these segments are about the SAME TOPIC. If they discuss different topics (e.g., "Early Life" vs "Career"), 
+mark as "unsupported" NOT "conflict".
 
 GROKIPEDIA SEGMENT:
 {grok_segment}
@@ -128,23 +211,31 @@ GROKIPEDIA SEGMENT:
 WIKIPEDIA SEGMENT:
 {wiki_segment}
 
-{f'CONTEXT: {context}' if context else ''}
+{topic_info}
+
+{f'ADDITIONAL CONTEXT: {context}' if context else ''}
 
 Classify the relationship and return JSON with:
 1. "label": one of "aligned", "missing_context", "conflict", or "unsupported"
-   - "aligned": Same facts, similar meaning, well-supported
-   - "missing_context": Related but missing important details or nuance
-   - "conflict": Contradictory facts, different numbers/dates, opposing claims
-   - "unsupported": Content not found in Wikipedia, potentially hallucinated
+   - "aligned": Same topic AND same facts, similar meaning, well-supported
+   - "missing_context": Same topic but missing important details or nuance
+   - "conflict": SAME TOPIC but contradictory facts, different numbers/dates, opposing claims
+   - "unsupported": Different topic OR content not found in Wikipedia, potentially hallucinated
+   
+   ⚠️ CRITICAL: Only use "conflict" if segments are about the SAME topic but have conflicting facts.
+   If segments are about different topics, use "unsupported".
 
 2. "confidence": float 0.0-1.0
 
 3. "explanation": Brief explanation of why this classification
 
 4. "detected_issues": Array of specific issues found (e.g., ["different dates", "missing citation", "conflicting statistics"])
+   - Only include issues if segments are about the same topic
 
-Be strict: only mark as "aligned" if facts truly match. Mark as "conflict" if numbers, dates, or core facts differ.
-Mark as "unsupported" if the Grokipedia content has no basis in Wikipedia.
+Be VERY strict: 
+- Only mark as "aligned" if same topic AND facts truly match
+- Only mark as "conflict" if SAME topic but numbers, dates, or core facts differ
+- Mark as "unsupported" if different topics OR content has no basis in Wikipedia
 
 Return ONLY valid JSON, no other text."""
 

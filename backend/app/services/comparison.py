@@ -306,53 +306,99 @@ class ComparisonService:
         if wiki_citations and not grok_citations:
             detected_issues.append("Missing citations")
         
-        # 5. Use LLM for final classification if available and enabled
-        if self.use_llm_classification and self.llm_client.is_available():
+        # 5. Smart GPT usage: Only use GPT for ambiguous cases (saves time and API calls)
+        # Skip GPT for obvious cases:
+        # - Very high similarity (>0.75) = clearly aligned, skip GPT
+        # - Very low similarity (<0.15) = clearly unsupported, skip GPT
+        # - Use GPT only for medium similarity (0.15-0.75) where classification is ambiguous
+        use_gpt = (
+            self.use_llm_classification 
+            and self.llm_client.is_available() 
+            and 0.15 <= similarity_score <= 0.75  # Only for ambiguous cases
+        )
+        
+        topic_relevance = None
+        if use_gpt:
+            try:
+                # Quick topic relevance check for ambiguous segments only
+                topic_relevance = self.llm_client.check_topic_relevance(grok_segment, best_wiki_match)
+                
+                # If segments are about different topics, mark as unsupported (not conflict)
+                if not topic_relevance.get("is_relevant", True):
+                    return SegmentLabel.UNSUPPORTED, similarity_score, [best_wiki_match], [f"Different topics: {topic_relevance.get('reason', '')}"]
+            except Exception as e:
+                # Continue without GPT if error
+                pass
+        
+        # 6. Use LLM for final classification only for ambiguous segments (if same topic)
+        if use_gpt and topic_relevance and topic_relevance.get("is_relevant", True):
             try:
                 # Get context from surrounding segments
                 context = f"Similarity: {similarity_score:.2f}, Entity alignment: {entity_similarities}, Date conflicts: {date_conflicts}"
+                if topic_relevance:
+                    context += f", Topic relevance: {topic_relevance.get('relevance_score', 0):.2f}"
                 
                 llm_result = self.llm_client.classify_segment_relationship(
                     grok_segment,
                     best_wiki_match,
-                    context=context
+                    context=context,
+                    topic_relevance=topic_relevance
                 )
                 
                 # Combine LLM detected issues with our detected issues
                 detected_issues.extend(llm_result.get("detected_issues", []))
                 
-                # Use LLM label if confidence is high, otherwise use similarity-based
+                # Use LLM label if confidence is decent
                 llm_confidence = llm_result.get("confidence", 0.0)
-                if llm_confidence > 0.7:
+                if llm_confidence > 0.65:
                     label_str = llm_result.get("label", "unsupported")
                     try:
                         label = SegmentLabel(label_str)
+                        # Use LLM's classification as it's more intelligent
                         return label, similarity_score, [best_wiki_match], detected_issues
                     except ValueError:
                         pass  # Fall through to similarity-based classification
             except Exception as e:
-                print(f"LLM classification error: {e}")
+                # Continue without GPT if error
+                pass
         
-        # 6. Fallback to similarity-based classification (enhanced with entity/date checks)
+        # 7. Fast similarity-based classification (for obvious cases or when GPT skipped)
+        # High similarity = aligned (skip GPT for speed - these are obvious)
+        if similarity_score >= 0.75:
+            return SegmentLabel.ALIGNED, similarity_score, [best_wiki_match], detected_issues
+        
+        # Very low similarity = unsupported (skip GPT for speed - these are obvious)
+        if similarity_score < 0.15:
+            return SegmentLabel.UNSUPPORTED, similarity_score, [], ["Low similarity - likely different topics"]
+        
+        # Medium similarity - use entity/date checks to determine (GPT already handled if enabled)
+        if topic_relevance and not topic_relevance.get("is_relevant", True):
+            # Different topics - unsupported, not conflict
+            return SegmentLabel.UNSUPPORTED, similarity_score, [], [f"Different topics: {topic_relevance.get('reason', '')}"]
+        
         if detected_issues and similarity_score < 0.5:
-            # If we have issues and low similarity, likely conflict
+            # If we have issues and low similarity, check if it's a conflict or just different topics
             if any("conflict" in issue.lower() or "different" in issue.lower() for issue in detected_issues):
-                return SegmentLabel.CONFLICT, similarity_score, [best_wiki_match], detected_issues
+                # Only mark as conflict if similarity is decent (suggests same topic)
+                if similarity_score > 0.25:
+                    return SegmentLabel.CONFLICT, similarity_score, [best_wiki_match], detected_issues
+                else:
+                    # Very low similarity suggests different topics
+                    return SegmentLabel.UNSUPPORTED, similarity_score, [], detected_issues
             else:
                 return SegmentLabel.MISSING_CONTEXT, similarity_score, [best_wiki_match], detected_issues
         
-        # Standard similarity-based classification
-        if similarity_score >= 0.7:
-            return SegmentLabel.ALIGNED, similarity_score, [best_wiki_match], detected_issues
-        elif similarity_score >= 0.3:
+        # Standard similarity-based classification for medium scores
+        if similarity_score >= 0.5:
             return SegmentLabel.MISSING_CONTEXT, similarity_score, [best_wiki_match], detected_issues
-        elif similarity_score > 0.1:
-            # Check if issues suggest conflict
+        elif similarity_score >= 0.25:
+            # Check if issues suggest conflict (only if decent similarity suggests same topic)
             if detected_issues:
                 return SegmentLabel.CONFLICT, similarity_score, [best_wiki_match], detected_issues
             return SegmentLabel.MISSING_CONTEXT, similarity_score, [best_wiki_match], detected_issues
         else:
-            return SegmentLabel.UNSUPPORTED, similarity_score, [], detected_issues
+            # Low similarity - likely different topics
+            return SegmentLabel.UNSUPPORTED, similarity_score, [], ["Low similarity - likely different topics"]
     
     def _calculate_trust_score(self, comparisons: List[SegmentComparison]) -> float:
         """Calculate overall trust score from segment comparisons."""
@@ -431,6 +477,10 @@ class ComparisonService:
         all_segments = wiki_segments + grok_segments
         embeddings = self._get_embeddings(all_segments)
         
+        # Track GPT usage for performance monitoring
+        gpt_calls = 0
+        fast_path_calls = 0
+        
         if embeddings is None:
             # Fallback to basic TF-IDF if embeddings unavailable
             print("Warning: Embeddings unavailable, using basic similarity")
@@ -453,6 +503,7 @@ class ComparisonService:
             row = sim_matrix[idx]
             if row.size == 0:
                 label, similarity, matched, issues = SegmentLabel.UNSUPPORTED, 0.0, [], []
+                fast_path_calls += 1
             else:
                 best_idx = row.argmax()
                 max_sim = float(row[best_idx])
@@ -460,6 +511,17 @@ class ComparisonService:
                 
                 # Extract entities for this segment
                 grok_entities = self._extract_entities(grok_seg)
+                
+                # Track if GPT was used
+                will_use_gpt = (
+                    self.use_llm_classification 
+                    and self.llm_client.is_available() 
+                    and 0.15 <= max_sim <= 0.75
+                )
+                if will_use_gpt:
+                    gpt_calls += 1
+                else:
+                    fast_path_calls += 1
                 
                 # Enhanced classification
                 label, similarity, matched, issues = self._classify_segment_enhanced(
@@ -480,6 +542,10 @@ class ComparisonService:
                     matched_wiki_sentences=matched,
                 )
             )
+        
+        # Log performance stats
+        if self.llm_client.is_available():
+            print(f"⚡ Performance: {fast_path_calls} segments used fast path, {gpt_calls} segments used GPT ({(gpt_calls/len(comparisons)*100) if comparisons else 0:.1f}%)")
         
         # Calculate trust score
         trust_score = self._calculate_trust_score(comparisons)

@@ -1,8 +1,17 @@
 """Main FastAPI application for Parallelpedia."""
+import os
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import Optional
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+
+# Load .env file from backend directory
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 from app.models import Article, TopicAnalysis, CommunityNote
 from app.services.articles import ArticleService
@@ -22,8 +31,26 @@ async def lifespan(app: FastAPI):
     """Manage application lifespan."""
     global article_service, comparison_service, dkg_client
     
+    # Check if OpenAI API key is loaded
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        # Mask the key for security (show first 7 and last 4 chars)
+        masked_key = f"{openai_key[:7]}...{openai_key[-4:]}" if len(openai_key) > 11 else "***"
+        print(f"✅ OpenAI API key loaded: {masked_key}")
+    else:
+        print("⚠️  Warning: OPENAI_API_KEY not found in environment variables.")
+        print("   The app will use sentence-transformers for embeddings (still good quality).")
+        print("   To enable GPT-4 classification, set OPENAI_API_KEY in your .env file.")
+    
     # Initialize services
     llm_client = LLMClient()
+    if llm_client.is_available():
+        print("✅ LLM client initialized and ready (OpenAI embeddings + GPT-4 classification enabled)")
+        print("   GPT will be used for topic relevance checking and intelligent classification")
+    else:
+        print("ℹ️  LLM client using fallback mode (sentence-transformers for embeddings)")
+        print("   Set OPENAI_API_KEY in .env to enable GPT-4 topic relevance checking")
+    
     dkg_client = DKGClient()
     article_service = ArticleService(dkg_client=dkg_client)
     comparison_service = ComparisonService(llm_client=llm_client)
