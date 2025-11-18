@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Article, SegmentComparison, SegmentLabel } from '../types';
 import {
@@ -19,7 +19,7 @@ interface HighlightedArticleViewProps {
   containerRef?: React.RefObject<HTMLDivElement>;
 }
 
-export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
+export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = React.memo(({
   article,
   title,
   comparisons = [],
@@ -34,48 +34,51 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
   const segmentRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
-  const isScrollingRef = useRef(false);
+  const syncTimeoutRef = useRef<number | null>(null);
 
-  // Create highlighted segments
-  const highlightedSegments = comparisons
-    ? createHighlightedSegments(article.raw_text, comparisons, source)
-    : [];
+  // Memoize highlighted segments creation
+  const highlightedSegments = useMemo(() => {
+    return comparisons
+      ? createHighlightedSegments(article.raw_text, comparisons, source)
+      : [];
+  }, [comparisons, article.raw_text, source]);
 
-  // Split text into paragraphs
-  const splitParagraphs = (text: string): string[] => {
-    let paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
-    
-    if (paragraphs.length <= 1) {
-      paragraphs = text.split(/\n+/).filter(p => p.trim().length > 20);
-    }
-    
-    if (paragraphs.length <= 1) {
-      paragraphs = text.split(/[.!?]+\s+/).filter(p => p.trim().length > 50);
-    }
-    
-    return paragraphs.length > 0 ? paragraphs : [text];
-  };
+  // Memoize paragraph splitting
+  const paragraphs = useMemo(() => {
+    const splitParagraphs = (text: string): string[] => {
+      let paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+      
+      if (paragraphs.length <= 1) {
+        paragraphs = text.split(/\n+/).filter(p => p.trim().length > 20);
+      }
+      
+      if (paragraphs.length <= 1) {
+        paragraphs = text.split(/[.!?]+\s+/).filter(p => p.trim().length > 50);
+      }
+      
+      return paragraphs.length > 0 ? paragraphs : [text];
+    };
+    return splitParagraphs(article.raw_text);
+  }, [article.raw_text]);
 
-  const paragraphs = splitParagraphs(article.raw_text);
-
-  // Get highlight color for a segment
-  const getHighlightColor = (label: SegmentLabel): string => {
+  // Memoize highlight color function
+  const getHighlightColor = useCallback((label: SegmentLabel): string => {
     switch (label) {
       case SegmentLabel.CONFLICT:
-        return 'bg-red-100 hover:bg-red-200 border-b-2 border-red-500 cursor-pointer transition-all duration-200 rounded-sm px-0.5 font-medium';
+        return 'bg-red-100 hover:bg-red-200 border-b-2 border-red-500 cursor-pointer transition-colors rounded-sm px-0.5 font-medium';
       case SegmentLabel.MISSING_CONTEXT:
-        return 'bg-yellow-100 hover:bg-yellow-200 border-b-2 border-yellow-500 cursor-pointer transition-all duration-200 rounded-sm px-0.5 font-medium';
+        return 'bg-yellow-100 hover:bg-yellow-200 border-b-2 border-yellow-500 cursor-pointer transition-colors rounded-sm px-0.5 font-medium';
       case SegmentLabel.UNSUPPORTED:
-        return 'bg-gray-100 hover:bg-gray-200 border-b-2 border-gray-500 cursor-pointer transition-all duration-200 rounded-sm px-0.5 font-medium';
+        return 'bg-gray-100 hover:bg-gray-200 border-b-2 border-gray-500 cursor-pointer transition-colors rounded-sm px-0.5 font-medium';
       case SegmentLabel.ALIGNED:
-        return 'bg-green-100 hover:bg-green-200 border-b-2 border-green-500 cursor-pointer transition-all duration-200 rounded-sm px-0.5 font-medium';
+        return 'bg-green-100 hover:bg-green-200 border-b-2 border-green-500 cursor-pointer transition-colors rounded-sm px-0.5 font-medium';
       default:
-        return 'bg-blue-100 hover:bg-blue-200 border-b-2 border-blue-500 cursor-pointer transition-all duration-200 rounded-sm px-0.5 font-medium';
+        return 'bg-blue-100 hover:bg-blue-200 border-b-2 border-blue-500 cursor-pointer transition-colors rounded-sm px-0.5 font-medium';
     }
-  };
+  }, []);
 
-  // Handle segment click
-  const handleSegmentClick = (segment: HighlightedSegment, element: HTMLSpanElement, event: React.MouseEvent) => {
+  // Handle segment click - ONLY on click, no hover
+  const handleSegmentClick = useCallback((segment: HighlightedSegment, element: HTMLSpanElement, event: React.MouseEvent) => {
     if (source !== 'grok') return;
 
     event.stopPropagation();
@@ -89,26 +92,13 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
       setActiveSegment(segment);
       setAnchorElement(element);
     }
-  };
-
-  // Handle segment hover
-  const handleSegmentHover = (segment: HighlightedSegment, element: HTMLSpanElement, event: React.MouseEvent) => {
-    if (source !== 'grok') return;
-    
-    // Only show on hover if no tooltip is currently open
-    if (!activeSegment) {
-      setActiveSegment(segment);
-      setAnchorElement(element);
-    }
-    
-    event.stopPropagation();
-  };
+  }, [source, activeSegment]);
 
   // Close tooltip
-  const closeTooltip = () => {
+  const closeTooltip = useCallback(() => {
     setActiveSegment(null);
     setAnchorElement(null);
-  };
+  }, []);
 
   // Close tooltip on outside click or Escape
   useEffect(() => {
@@ -142,54 +132,45 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
       document.removeEventListener('click', handleClickOutside, true);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [activeSegment]);
+  }, [activeSegment, closeTooltip]);
 
-  // Handle scroll synchronization
+  // Minimal scroll synchronization - only sync when scrolling stops to avoid lag
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !syncScroll || !scrollContainerRef?.current) return;
 
     const targetContainer = scrollContainerRef.current;
-    let rafId: number | null = null;
-    let lastScrollTop = container.scrollTop;
 
     const handleScroll = () => {
-      const currentScrollTop = container.scrollTop;
-      
-      if (Math.abs(currentScrollTop - lastScrollTop) < 1) {
-        return;
+      // Clear any pending sync
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
       }
-      
-      lastScrollTop = currentScrollTop;
-      
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
-      
-      if (!isScrollingRef.current) {
-        rafId = requestAnimationFrame(() => {
-          if (!isScrollingRef.current && targetContainer) {
-            isScrollingRef.current = true;
+
+      // Only sync after user stops scrolling for 100ms - this prevents lag
+      syncTimeoutRef.current = window.setTimeout(() => {
+        if (targetContainer) {
+          const currentScrollTop = container.scrollTop;
+          // Only update if significantly different to avoid jitter
+          if (Math.abs(targetContainer.scrollTop - currentScrollTop) > 5) {
             targetContainer.scrollTop = currentScrollTop;
-            requestAnimationFrame(() => {
-              isScrollingRef.current = false;
-            });
           }
-        });
-      }
+        }
+      }, 100); // Wait for scroll to stop
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
+    
     return () => {
       container.removeEventListener('scroll', handleScroll);
-      if (rafId) {
-        cancelAnimationFrame(rafId);
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
       }
     };
   }, [syncScroll, scrollContainerRef, containerRef]);
 
-  // Render highlighted text for a paragraph
-  const renderHighlightedParagraph = (paragraphText: string, paragraphIndex: number) => {
+  // Memoize paragraph rendering
+  const renderHighlightedParagraph = useCallback((paragraphText: string, paragraphIndex: number) => {
     let paragraphStart = -1;
     const normalizedParagraph = paragraphText.trim().toLowerCase();
     const normalizedFullText = article.raw_text.toLowerCase();
@@ -259,11 +240,6 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
                     handleSegmentClick(part.segment, e.currentTarget, e);
                   }
                 }}
-                onMouseEnter={(e) => {
-                  if (source === 'grok' && part.segment && e.currentTarget) {
-                    handleSegmentHover(part.segment, e.currentTarget, e);
-                  }
-                }}
                 data-highlighted-segment
                 data-segment-id={part.segment.comparison.segment_id}
                 title={`${part.segment.label}: Click to see details`}
@@ -276,13 +252,45 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
         })}
       </p>
     );
-  };
+  }, [article.raw_text, paragraphs, highlightedSegments, activeSegment, getHighlightColor, source, handleSegmentClick]);
+
+  // Memoize rendered paragraphs
+  const renderedParagraphs = useMemo(() => {
+    return paragraphs.map((paragraph, index) => renderHighlightedParagraph(paragraph, index));
+  }, [paragraphs, renderHighlightedParagraph]);
+
+  // Memoize legend
+  const legend = useMemo(() => {
+    if (highlightedSegments.length === 0) return null;
+    
+    return (
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="text-xs font-semibold text-gray-600 mb-2">Legend:</div>
+        <div className="flex flex-wrap gap-3 text-xs">
+          {[
+            { label: SegmentLabel.CONFLICT, color: 'bg-red-100 border-red-400', text: 'Conflict' },
+            { label: SegmentLabel.MISSING_CONTEXT, color: 'bg-yellow-100 border-yellow-400', text: 'Missing Context' },
+            { label: SegmentLabel.UNSUPPORTED, color: 'bg-gray-100 border-gray-400', text: 'Unsupported' },
+          ].map(({ label, color, text }) => {
+            const count = highlightedSegments.filter(s => s.label === label).length;
+            if (count === 0) return null;
+            return (
+              <div key={label} className="flex items-center gap-1">
+                <span className={`w-4 h-4 ${color} border-b-2 rounded-sm`} />
+                <span className="text-gray-600">{text} ({count})</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }, [highlightedSegments]);
 
   return (
     <>
       <div 
         ref={containerRef}
-        className="flex-1 bg-white rounded-lg shadow-md p-6 overflow-y-auto max-h-[600px]"
+        className="flex-1 bg-white rounded-lg shadow-md p-6 overflow-y-auto max-h-[600px] scroll-smooth"
       >
         <h2 className="text-2xl font-bold mb-4 text-gray-800">{title}</h2>
         {article.url && (
@@ -297,34 +305,13 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
         )}
         
         <div className="prose prose-sm max-w-none">
-          {paragraphs.map((paragraph, index) => renderHighlightedParagraph(paragraph, index))}
+          {renderedParagraphs}
         </div>
 
-        {/* Legend */}
-        {highlightedSegments.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="text-xs font-semibold text-gray-600 mb-2">Legend:</div>
-            <div className="flex flex-wrap gap-3 text-xs">
-              {[
-                { label: SegmentLabel.CONFLICT, color: 'bg-red-100 border-red-400', text: 'Conflict' },
-                { label: SegmentLabel.MISSING_CONTEXT, color: 'bg-yellow-100 border-yellow-400', text: 'Missing Context' },
-                { label: SegmentLabel.UNSUPPORTED, color: 'bg-gray-100 border-gray-400', text: 'Unsupported' },
-              ].map(({ label, color, text }) => {
-                const count = highlightedSegments.filter(s => s.label === label).length;
-                if (count === 0) return null;
-                return (
-                  <div key={label} className="flex items-center gap-1">
-                    <span className={`w-4 h-4 ${color} border-b-2 rounded-sm`} />
-                    <span className="text-gray-600">{text} ({count})</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {legend}
       </div>
 
-      {/* Modern Tooltip via Portal */}
+      {/* Modern Tooltip via Portal - Only on click */}
       {activeSegment && source === 'grok' && anchorElement && typeof document !== 'undefined' && document.body && createPortal(
         <div data-tooltip>
           <DifferenceTooltip
@@ -337,4 +324,6 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = ({
       )}
     </>
   );
-};
+});
+
+HighlightedArticleView.displayName = 'HighlightedArticleView';

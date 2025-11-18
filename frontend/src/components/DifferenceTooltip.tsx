@@ -77,28 +77,25 @@ export const DifferenceTooltip: React.FC<DifferenceTooltipProps> = ({
       });
     });
 
-    // Update on scroll/resize
+    // Throttled update on scroll/resize for better performance
+    let updateRaf: number | null = null;
     const handleUpdate = () => {
-      requestAnimationFrame(updatePosition);
+      if (updateRaf) return;
+      updateRaf = requestAnimationFrame(() => {
+        updatePosition();
+        updateRaf = null;
+      });
     };
 
-    window.addEventListener('scroll', handleUpdate, true);
-    window.addEventListener('resize', handleUpdate);
-    
-    // Also listen to scroll on parent containers
-    let parent: HTMLElement | null = anchorElement.parentElement;
-    while (parent) {
-      parent.addEventListener('scroll', handleUpdate, true);
-      parent = parent.parentElement;
-    }
+    // Only listen to window scroll/resize - more performant
+    window.addEventListener('scroll', handleUpdate, { passive: true, capture: true });
+    window.addEventListener('resize', handleUpdate, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleUpdate, true);
       window.removeEventListener('resize', handleUpdate);
-      let parent: HTMLElement | null = anchorElement.parentElement;
-      while (parent) {
-        parent.removeEventListener('scroll', handleUpdate, true);
-        parent = parent.parentElement;
+      if (updateRaf) {
+        cancelAnimationFrame(updateRaf);
       }
     };
   }, [anchorElement]);
