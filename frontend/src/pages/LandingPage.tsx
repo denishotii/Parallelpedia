@@ -267,7 +267,7 @@ export default function LandingPage() {
                       <div className="flex justify-between text-xs">
                         <span className={`font-semibold ${getColorClasses(item.color, 'text')}`}>{item.label}</span>
                         <span className="text-gray-600">{item.value}</span>
-                      </div>
+                  </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
@@ -275,13 +275,13 @@ export default function LandingPage() {
                           transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
                           className={`h-full ${getColorClasses(item.color, 'bg')} rounded-full`}
                         />
-                      </div>
-                    </div>
+                  </div>
+                  </div>
                   ))}
+                  </div>
                 </div>
-              </div>
             </motion.div>
-          </div>
+              </div>
         </motion.div>
       </section>
 
@@ -343,11 +343,11 @@ export default function LandingPage() {
               <div className="flex items-center gap-4 mb-4">
                 <div className={`w-16 h-16 rounded-xl bg-white ${problem.border} border-2 flex items-center justify-center shadow-md`}>
                   <problem.icon className={`w-8 h-8 ${problem.iconColor}`} />
-                </div>
+            </div>
                 <div>
                   <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Problem #{problem.num}</div>
                   <div className="text-3xl">{problem.emoji}</div>
-                </div>
+          </div>
               </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{problem.title}</h3>
                 <p className="text-sm text-gray-700 leading-relaxed">{problem.desc}</p>
@@ -381,24 +381,24 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                   <span className="text-sm font-medium text-gray-700">✅ Aligned</span>
                   <span className="text-sm font-bold text-green-700">42 segments</span>
-                </div>
+            </div>
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                   <span className="text-sm font-medium text-gray-700">⚠️ Missing Context</span>
                   <span className="text-sm font-bold text-yellow-700">12 segments</span>
-                </div>
+              </div>
                 <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
                   <span className="text-sm font-medium text-gray-700">✗ Conflicts</span>
                   <span className="text-sm font-bold text-red-700">7 segments</span>
-                </div>
+            </div>
               </div>
               <div className="pt-4 border-t border-gray-200">
                 <div className="text-xs text-gray-500 mb-2">Published to OriginTrail DKG</div>
                 <div className="flex items-center gap-2 text-sm text-blue-600">
                   <Link2 className="w-4 h-4" />
                   <span className="font-mono">did:dkg:otp:20430/0xcdb2...</span>
-                </div>
-              </div>
             </div>
+          </div>
+        </div>
           </motion.div>
 
           <motion.div 
@@ -442,7 +442,7 @@ export default function LandingPage() {
                     <div className={`w-14 h-14 rounded-xl bg-white ${item.border} border-2 flex items-center justify-center flex-shrink-0 shadow-sm`}>
                       <item.icon className="w-7 h-7 text-gray-700" />
                     </div>
-                    <div>
+          <div>
                       <h3 className="font-bold text-gray-900 mb-2 text-lg">{item.title}</h3>
                       <p className="text-sm text-gray-700 leading-relaxed">{item.desc}</p>
                     </div>
@@ -456,7 +456,7 @@ export default function LandingPage() {
               className="bg-white rounded-2xl border-2 border-gray-200 p-8 shadow-xl"
             >
               <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Complete Package</h3>
-              <div className="space-y-3">
+            <div className="space-y-3">
                 {[
                   'Modern comparison tool',
                   'Smart AI decision system',
@@ -480,7 +480,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
           </motion.div>
-        </div>
+              </div>
       </section>
 
       {/* How It Works - Enhanced */}
@@ -514,11 +514,11 @@ export default function LandingPage() {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
                         {step.num}
-                      </div>
+              </div>
                       <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                         <step.icon className="w-6 h-6 text-blue-600" />
-                      </div>
-                    </div>
+            </div>
+          </div>
                     <h3 className="font-bold text-gray-900 mb-2 text-xl">{step.title}</h3>
                     <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
                   </motion.div>
@@ -623,14 +623,14 @@ export default function LandingPage() {
                           transition={{ duration: 0.8, delay: idx * 0.1 + 0.2 }}
                           className={`h-full ${item.color} rounded-full`}
                         />
-                      </div>
+            </div>
                     </motion.div>
                   ))}
                 </div>
                 <div className="mt-4 text-sm text-gray-600 text-center">
-                  Parallelpedia turns long AI articles into a concise trust profile you can skim in seconds.
-                </div>
-              </div>
+              Parallelpedia turns long AI articles into a concise trust profile you can skim in seconds.
+            </div>
+          </div>
             </div>
           </motion.div>
         </div>
@@ -681,7 +681,7 @@ export default function LandingPage() {
                   )}
                 </React.Fragment>
               ))}
-            </div>
+              </div>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -736,7 +736,7 @@ export default function LandingPage() {
                 </li>
               </ul>
             </motion.div>
-          </div>
+              </div>
 
           {/* Four-Tier Classification */}
           <motion.div
@@ -766,7 +766,7 @@ export default function LandingPage() {
                   <div className="text-xs text-gray-500">{tier.detail}</div>
                 </motion.div>
               ))}
-            </div>
+              </div>
           </motion.div>
 
           {/* Multi-Layer Trust System - Merged */}
@@ -813,7 +813,7 @@ export default function LandingPage() {
                 >
                   <div className={`w-16 h-16 rounded-xl ${layer.color === 'blue' ? 'bg-blue-100' : layer.color === 'purple' ? 'bg-purple-100' : 'bg-green-100'} flex items-center justify-center mb-4`}>
                     <layer.icon className={`w-8 h-8 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
-                  </div>
+            </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">{layer.layer}</h3>
                   <p className="text-sm text-gray-700 mb-4 leading-relaxed">{layer.desc}</p>
                   <ul className="space-y-2">
@@ -823,10 +823,10 @@ export default function LandingPage() {
                         {feature}
                       </li>
                     ))}
-                  </ul>
+          </ul>
                 </motion.div>
               ))}
-            </div>
+          </div>
             {/* Connecting Flow */}
             <motion.div
               {...fadeInUp}
@@ -881,7 +881,7 @@ export default function LandingPage() {
                   )}
                 </React.Fragment>
               ))}
-            </div>
+                </div>
             <div className="mt-8 text-center text-sm text-gray-600">
               <p>Community Notes published as verifiable Knowledge Assets on OriginTrail blockchain</p>
             </div>
@@ -921,6 +921,27 @@ export default function LandingPage() {
               >
                 View Plugin on GitHub <ArrowRight className="w-4 h-4" />
               </a>
+              
+              {/* JSON-LD Example */}
+              <div className="mt-6 p-4 bg-gray-900 rounded-lg border border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase">JSON-LD Knowledge Asset Example</span>
+                  <Code className="w-4 h-4 text-gray-400" />
+              </div>
+                <pre className="text-xs text-green-400 overflow-x-auto">
+{`{
+  "@id": "uuid:685e319f-b177-40b6-a42f-e8c2f3ad2f74",
+  "@type": ["https://schema.org/CommunityNote"],
+  "https://schema.org/topicId": [{"@value": "Elon_Musk"}],
+  "https://schema.org/trustScore": [{"@value": "69.23", "@type": "xsd:double"}],
+  "https://schema.org/createdBy": [{"@value": "Parallelpedia"}],
+  "https://schema.org/inputHash": [{"@value": "ace75a72758..."}]
+}`}
+                </pre>
+                <p className="text-xs text-gray-500 mt-2">
+                  Real JSON-LD structure published to OriginTrail DKG as a Knowledge Asset
+                </p>
+              </div>
             </motion.div>
             
             <motion.div
@@ -952,6 +973,19 @@ export default function LandingPage() {
                   <span><strong>Trust Layer:</strong> Tamper-resistant records of content verification</span>
                 </li>
               </ul>
+              
+              {/* Provenance Example */}
+              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="w-4 h-4 text-green-600" />
+                  <span className="text-xs font-semibold text-green-700 uppercase">Provenance Example</span>
+                </div>
+                <div className="space-y-1 text-xs font-mono text-gray-700">
+                  <div><span className="text-green-600">source:</span> https://en.wikipedia.org/wiki/Artificial_intelligence</div>
+                  <div><span className="text-green-600">hash:</span> 0x8943...fe91</div>
+                  <div><span className="text-green-600">createdBy:</span> Parallelpedia</div>
+                </div>
+              </div>
             </motion.div>
           </div>
 
@@ -978,7 +1012,7 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </motion.div>
-        </div>
+          </div>
       </section>
 
       {/* Impact & Ecosystem - Enhanced */}
@@ -992,6 +1026,32 @@ export default function LandingPage() {
             </p>
           </motion.div>
           
+          {/* Real Example Impact */}
+          <motion.div
+            {...fadeInUp}
+            className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 p-8 mb-12 shadow-lg"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Real Example Impact</h3>
+                <p className="text-gray-700 mb-3">
+                  Parallelpedia detected <strong className="text-blue-600">82 unsupported statements</strong> in the "Artificial_intelligence" article — demonstrating how much missing context exists in AI-generated knowledge today.
+                </p>
+                <div className="text-sm text-gray-600 bg-white/60 p-3 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><span className="font-semibold">Aligned:</span> 142 segments</div>
+                    <div><span className="font-semibold">Missing Context:</span> 58 segments</div>
+                    <div><span className="font-semibold">Conflicts:</span> 12 segments</div>
+                    <div><span className="font-semibold">Unsupported:</span> 82 segments</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           <motion.div
             variants={staggerContainer}
             initial="initial"
@@ -1098,9 +1158,9 @@ export default function LandingPage() {
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-12 h-12 rounded-xl ${stack.color === 'blue' ? 'bg-blue-600' : stack.color === 'green' ? 'bg-green-600' : 'bg-purple-600'} flex items-center justify-center`}>
                       <stack.icon className="w-6 h-6 text-white" />
-                    </div>
+            </div>
                     <h4 className="text-xl font-bold text-gray-900">{stack.title}</h4>
-                  </div>
+            </div>
                   <ul className="space-y-2">
                     {stack.items.map((item, itemIdx) => (
                       <li key={itemIdx} className="flex items-center gap-2 text-gray-700 text-sm">
@@ -1116,6 +1176,75 @@ export default function LandingPage() {
               <ArrowRight className="w-5 h-5" />
               <span className="font-semibold">Data Flow</span>
               <ArrowRight className="w-5 h-5" />
+          </div>
+          </motion.div>
+
+          {/* Visual Architecture Diagram */}
+          <motion.div
+            {...fadeInUp}
+            className="bg-white rounded-3xl border-2 border-gray-200 p-10 md:p-12 shadow-xl mb-12"
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">System Architecture Diagram</h3>
+            <div className="flex flex-col items-center gap-6">
+              {/* Top Row: Frontend */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl p-6 border-2 border-blue-300 shadow-lg min-w-[280px] text-center"
+              >
+                <Code className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <h4 className="font-bold text-gray-900 mb-2">Frontend (React)</h4>
+                <p className="text-sm text-gray-600">User Interface & Visualization</p>
+              </motion.div>
+              
+              {/* Arrow Down */}
+              <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+              
+              {/* Middle Row: Backend */}
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-gradient-to-br from-green-100 to-green-50 rounded-xl p-6 border-2 border-green-300 shadow-lg min-w-[240px] text-center"
+                >
+                  <Cpu className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                  <h4 className="font-bold text-gray-900 mb-2">Backend (FastAPI)</h4>
+                  <p className="text-sm text-gray-600">Comparison Engine & Analysis</p>
+                </motion.div>
+                
+                <ArrowRight className="w-6 h-6 text-gray-400 hidden md:block" />
+                
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-xl p-6 border-2 border-purple-300 shadow-lg min-w-[240px] text-center"
+                >
+                  <Network className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                  <h4 className="font-bold text-gray-900 mb-2">DKG Plugin</h4>
+                  <p className="text-sm text-gray-600">MCP Tools & REST API</p>
+                </motion.div>
+              </div>
+              
+              {/* Arrow Down */}
+              <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+              
+              {/* Bottom Row: DKG */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="bg-gradient-to-br from-indigo-100 to-indigo-50 rounded-xl p-6 border-2 border-indigo-300 shadow-lg min-w-[280px] text-center"
+              >
+                <Database className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+                <h4 className="font-bold text-gray-900 mb-2">OriginTrail DKG</h4>
+                <p className="text-sm text-gray-600">Blockchain & Knowledge Assets</p>
+              </motion.div>
             </div>
           </motion.div>
 
