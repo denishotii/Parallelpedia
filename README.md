@@ -13,24 +13,43 @@ Parallelpedia compares Grokipedia and Wikipedia on sensitive topics, detects bia
 ## 🎯 Project Overview
 
 Parallelpedia is a full-stack application that:
-1. Fetches topics from Grokipedia (via OriginTrail DKG Knowledge Assets)
-2. Fetches corresponding Wikipedia articles
-3. Compares content and detects:
-   - ✅ Aligned claims
-   - ⚠️ Missing context
-   - ✗ Factual conflicts
-   - ? Unsupported claims
-4. Generates trust scores and Community Notes
-5. Publishes Community Notes to OriginTrail DKG as Knowledge Assets
-6. Provides a web UI for side-by-side comparison
-7. Exposes an API endpoint for AI agents (via MCP)
+1. **Fetches Articles**: Retrieves topics from Grokipedia (via DKG Knowledge Assets, API, or HTML scraping) and corresponding Wikipedia articles
+2. **Multi-Layered Comparison**: Uses semantic embeddings, NER, fact extraction, and LLM classification to detect:
+   - ✅ **Aligned** claims (similarity ≥ 0.7) - Content matches Wikipedia closely
+   - ⚠️ **Missing Context** (similarity 0.3-0.7) - Related but missing important details
+   - ✗ **Conflicts** (similarity 0.1-0.3 + detected issues) - Contradictory facts or different interpretations
+   - ? **Unsupported** (similarity < 0.1) - Content not found in Wikipedia, potential hallucinations
+3. **Trust Score Calculation**: Generates 0-100 trust scores based on segment classifications
+4. **Community Notes**: Creates structured Community Notes with summaries, label counts, and key examples
+5. **DKG Publishing**: Publishes Community Notes to OriginTrail DKG as Knowledge Assets with provenance
+6. **Web UI**: Provides interactive side-by-side comparison with color-coded highlights and detailed analysis
+7. **MCP Tools**: Exposes API endpoints and MCP tools for AI agents to query published Community Notes
 
 ## 🏗️ Architecture
 
-- **Backend**: FastAPI (Python) - REST API for article fetching, comparison, and DKG publishing
-- **Frontend**: React + Vite + TypeScript - Modern web UI with TailwindCSS
-- **DKG Integration**: OriginTrail DKG Node for Knowledge Asset management
-- **LLM**: OpenAI (abstracted for easy provider switching)
+Parallelpedia consists of three main components:
+
+- **Backend** (FastAPI, Python): REST API for article fetching, multi-layered comparison analysis, and DKG publishing
+  - Uses semantic embeddings (OpenAI or sentence-transformers)
+  - Implements NER, fact extraction, citation analysis, and LLM classification
+  - See [`backend/README.md`](backend/README.md) for detailed documentation
+
+- **Frontend** (React + Vite + TypeScript): Modern web UI with TailwindCSS
+  - Side-by-side article comparison with color-coded highlights
+  - Interactive tooltips and synchronized scrolling
+  - Trust score visualization and tabbed analysis views
+  - See [`frontend/README.md`](frontend/README.md) for detailed documentation
+
+- **DKG Plugin** (`@dkg/plugin-parallelpedia`): OriginTrail DKG Node plugin
+  - MCP tools for AI agents to query Community Notes
+  - REST API endpoints for publishing and querying
+  - SPARQL-based search and retrieval
+  - See [`dkg-node/packages/dkg-plugin-parallelpedia/README.md`](dkg-node/packages/dkg-plugin-parallelpedia/README.md) for detailed documentation
+
+- **LLM Integration**: OpenAI (abstracted for easy provider switching)
+  - GPT-4o-mini for intelligent segment classification
+  - OpenAI embeddings for semantic similarity
+  - Falls back to sentence-transformers or TF-IDF if OpenAI unavailable
 
 ## 🚀 Quick Start
 
@@ -64,15 +83,22 @@ pip install -r requirements.txt
 pip install -r requirements-optional.txt
 ```
 
-4. Configure environment:
+4. Install spaCy English model (for better NLP):
 ```bash
-cp .env.example .env
-# Edit .env with your settings:
-# - DKG_BASE_URL: URL of your DKG node (default: http://localhost:9200)
-# - OPENAI_API_KEY: Optional, only if you installed optional dependencies for enhanced comparison
+python -m spacy download en_core_web_sm
 ```
 
-5. Start the backend server:
+5. Configure environment:
+```bash
+cp .env.example .env
+# Edit .env with your settings (see backend/README.md for all environment variables):
+# - DKG_BASE_URL: URL of your DKG node (default: http://localhost:9200)
+# - OPENAI_API_KEY: Optional, recommended for enhanced LLM-based comparison
+# - USE_LLM_CLASSIFICATION: Enable GPT-4 classification (default: "1")
+# - COMPARE_MAX_SEGMENTS: Max segments per article (default: 300)
+```
+
+6. Start the backend server:
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
@@ -111,7 +137,23 @@ Open the landing page at `/` and click “Open Live App” or go directly to `/a
 
 The DKG node is already set up in the `dkg-node/` directory. See `dkg-node/README.md` for detailed setup instructions.
 
+**Important**: The Parallelpedia plugin must be built and registered:
+```bash
+cd dkg-node/packages/dkg-plugin-parallelpedia
+npm install
+npm run build
+```
+
+The plugin is already registered in `apps/agent/src/server/index.ts` and will be automatically loaded when the DKG node starts.
+
+**Configuration**: The DKG node requires environment variables:
+- `DKG_OTNODE_URL`: OT-Node endpoint (e.g., `https://v6-pegasus-node-02.origin-trail.network:8900`)
+- `DKG_BLOCKCHAIN`: Blockchain network (e.g., `otp:20430` for testnet)
+- `DKG_PUBLISH_WALLET`: Wallet private key for publishing
+
 Make sure the DKG node is running on `http://localhost:9200` (default).
+
+See [`dkg-node/packages/dkg-plugin-parallelpedia/README.md`](dkg-node/packages/dkg-plugin-parallelpedia/README.md) for detailed plugin documentation.
 
 ## 📖 Usage
 
@@ -143,21 +185,41 @@ npm run dev
 
 ## 🔌 API Endpoints
 
-### Article Endpoints
+### Backend API (FastAPI)
+
+**Article Endpoints:**
 - `GET /api/topics/{topic_id}/grok` - Get Grokipedia article
 - `GET /api/topics/{topic_id}/wikipedia` - Get Wikipedia article
 
-### Analysis Endpoints
+**Analysis Endpoints:**
 - `POST /api/topics/{topic_id}/compare` - Compare articles and generate analysis
 
-### DKG Endpoints
+**DKG Endpoints:**
 - `POST /api/topics/{topic_id}/community-note` - Publish Community Note to DKG
 - `GET /api/topics/{topic_id}/community-note` - Get Community Note (MCP endpoint)
 
-### Utility
+**Utility:**
+- `GET /` - Root endpoint
 - `GET /api/health` - Health check
 
-See `http://localhost:8000/docs` for interactive API documentation.
+**Interactive Documentation:**
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+See [`backend/README.md`](backend/README.md) for detailed API documentation with request/response examples.
+
+### DKG Plugin API
+
+**Community Note Endpoints:**
+- `GET /parallelpedia/community-notes/:topicId` - Get Community Note for a topic
+- `GET /parallelpedia/community-notes` - Search Community Notes (query params: keyword, minTrustScore, maxTrustScore, limit)
+- `POST /parallelpedia/community-notes` - Publish Community Note to DKG
+
+**MCP Tools (for AI Agents):**
+- `parallelpedia-get-community-note` - Get Community Note by topic ID
+- `parallelpedia-search-community-notes` - Search Community Notes with filters
+
+See [`dkg-node/packages/dkg-plugin-parallelpedia/README.md`](dkg-node/packages/dkg-plugin-parallelpedia/README.md) for detailed plugin API documentation.
 
 ## 🧪 Testing
 
@@ -177,47 +239,97 @@ npm test  # When tests are added
 
 ```
 Parallelpedia/
-├── backend/                 # FastAPI backend
+├── backend/                              # FastAPI backend
 │   ├── app/
-│   │   ├── models.py       # Pydantic models
-│   │   ├── main.py         # FastAPI app
-│   │   └── services/       # Business logic
-│   │       ├── articles.py
-│   │       ├── comparison.py
-│   │       ├── dkg_client.py
-│   │       └── llm_client.py
+│   │   ├── models.py                     # Pydantic models
+│   │   ├── main.py                       # FastAPI app
+│   │   └── services/                     # Business logic
+│   │       ├── articles.py               # Article fetching (Grokipedia/Wikipedia)
+│   │       ├── comparison.py             # Multi-layered comparison engine
+│   │       ├── dkg_client.py             # DKG integration client
+│   │       └── llm_client.py             # LLM abstraction (OpenAI)
 │   ├── requirements.txt
-│   └── README.md
-├── frontend/               # React frontend
+│   ├── requirements-optional.txt
+│   └── README.md                         # Detailed backend documentation
+├── frontend/                             # React frontend
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── services/      # API client
-│   │   └── App.tsx        # Main app
+│   │   ├── components/                   # React components
+│   │   │   ├── HighlightedArticleView.tsx
+│   │   │   ├── SegmentComparison.tsx
+│   │   │   ├── TrustScore.tsx
+│   │   │   └── DifferenceTooltip.tsx
+│   │   ├── services/
+│   │   │   └── api.ts                    # Backend API client
+│   │   ├── pages/
+│   │   │   └── LandingPage.tsx
+│   │   ├── utils/
+│   │   │   └── textHighlighting.ts      # Text highlighting logic
+│   │   └── App.tsx                       # Main app component
 │   ├── package.json
-│   └── README.md
-├── dkg-node/              # OriginTrail DKG Node
-└── README.md
+│   └── README.md                         # Detailed frontend documentation
+├── dkg-node/                             # OriginTrail DKG Node
+│   ├── packages/
+│   │   └── dkg-plugin-parallelpedia/    # Parallelpedia DKG plugin
+│   │       ├── src/
+│   │       │   └── index.ts              # Plugin implementation
+│   │       └── README.md                 # Detailed plugin documentation
+│   └── apps/
+│       └── agent/                        # DKG Node agent server
+└── README.md                             # This file
 ```
+
+**Documentation:**
+- **Backend**: See [`backend/README.md`](backend/README.md) for architecture, API details, comparison algorithm, and setup
+- **Frontend**: See [`frontend/README.md`](frontend/README.md) for component structure, UI features, and development guide
+- **DKG Plugin**: See [`dkg-node/packages/dkg-plugin-parallelpedia/README.md`](dkg-node/packages/dkg-plugin-parallelpedia/README.md) for MCP tools, API endpoints, and DKG integration
 
 ## 🎨 Features
 
-- ✅ Side-by-side article comparison
-- ✅ Color-coded segment analysis (aligned/missing/conflict/unsupported)
-- ✅ Trust score calculation (0-100)
-- ✅ Community Note generation
-- ✅ DKG Knowledge Asset publishing
-- ✅ MCP-compatible API endpoint
-- ✅ Responsive web UI
+### Comparison Engine
+- ✅ **Multi-layered Analysis**: Semantic embeddings, NER, fact extraction, citation analysis
+- ✅ **LLM Classification**: GPT-4o-mini for intelligent segment classification (optional)
+- ✅ **Four-Tier Classification**: Aligned, Missing Context, Conflict, Unsupported
+- ✅ **Trust Score Calculation**: Weighted algorithm (0-100) based on segment classifications
+- ✅ **Fallback Support**: Works without OpenAI using sentence-transformers or TF-IDF
+
+### User Interface
+- ✅ **Side-by-Side Comparison**: View Grokipedia and Wikipedia articles simultaneously
+- ✅ **Color-Coded Highlights**: Visual indicators for different segment types
+- ✅ **Interactive Tooltips**: Click segments to see detailed comparisons
+- ✅ **Tabbed Analysis**: Filtered views (Evidence, Conflicts, Alignments)
+- ✅ **Synchronized Scrolling**: Both articles scroll together for easy comparison
+- ✅ **Responsive Design**: Works on desktop and mobile devices
+
+### DKG Integration
+- ✅ **Community Note Publishing**: One-click publishing to OriginTrail DKG blockchain
+- ✅ **MCP Tools**: AI agents can query Community Notes via MCP tools
+- ✅ **REST API**: Plugin exposes REST endpoints for querying and searching
+- ✅ **SPARQL Queries**: Advanced search by keyword and trust score filters
+- ✅ **Provenance Tracking**: Includes source URLs and input hashes
+
+### Article Fetching
+- ✅ **Multiple Sources**: DKG Knowledge Assets, API, HTML scraping, placeholder fallback
+- ✅ **Wikipedia Integration**: Uses Wikimedia REST API with clean text extraction
+- ✅ **Error Handling**: Graceful fallbacks when sources are unavailable
+
+## 📚 Documentation
+
+For detailed documentation on each component:
+
+- **[Backend Documentation](backend/README.md)**: Architecture, API endpoints, comparison algorithm, environment variables, error handling
+- **[Frontend Documentation](frontend/README.md)**: Component structure, UI features, API integration, development guide
+- **[DKG Plugin Documentation](dkg-node/packages/dkg-plugin-parallelpedia/README.md)**: MCP tools, REST API, SPARQL queries, publishing flow, troubleshooting
 
 ## 🔮 Future Enhancements
 
-- [ ] Real Grokipedia article fetching from DKG
-- [ ] Advanced LLM-based comparison
-- [ ] Historical trust score tracking
+- [ ] Enhanced Grokipedia article fetching from DKG Knowledge Assets
+- [ ] Historical trust score tracking and trends
 - [ ] Batch topic processing
 - [ ] Export reports (PDF/JSON)
-- [ ] Citation verification
-- [ ] Bias detection algorithms
+- [ ] Citation verification and source validation
+- [ ] Advanced bias detection algorithms
+- [ ] Real-time comparison updates
+- [ ] Community voting on trust scores
 
 ## 📝 License
 
