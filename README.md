@@ -159,6 +159,126 @@ npm run dev
 
 See `http://localhost:8000/docs` for interactive API documentation.
 
+## 📡 How Publishing Works
+
+### Architecture Flow
+
+```
+┌─────────┐         ┌──────────────┐         ┌──────────┐         ┌─────────────┐
+│ Frontend│ ──────> │   Backend    │ ──────> │ DKG Node │ ──────> │  OT-Node   │
+│         │         │  (FastAPI)   │         │  Server  │         │ (Remote)   │
+│         │         │  :8000       │         │  :9200   │         │  :8900     │
+└─────────┘         └──────────────┘         └──────────┘         └─────────────┘
+```
+
+### Publishing Process
+
+1. **Frontend/API Request**: User clicks "Publish Community Note" or calls `POST /api/topics/{topic_id}/community-note`
+
+2. **Backend Processing**:
+   - Backend creates a `CommunityNote` object with trust score, summary, labels, etc.
+   - Backend calls `DKGClient.publish_community_note()` which sends a POST request to the DKG Node Server
+
+3. **DKG Node Server** (`dkg-node/apps/agent`):
+   - Receives request at `POST /parallelpedia/community-notes`
+   - The **Parallelpedia Plugin** (`dkg-node/packages/dkg-plugin-parallelpedia`) handles this endpoint
+   - Plugin converts the data to JSON-LD format
+   - Plugin calls `ctx.dkg.asset.create()` to publish to the DKG
+
+4. **OT-Node** (Remote):
+   - DKG Node Server connects to the remote OT-Node (e.g., `https://v6-pegasus-node-02.origin-trail.network:8900`)
+   - OT-Node publishes the asset to the blockchain
+   - Returns a UAL (Unique Asset Locator) like `did:dkg:otp:20430:...`
+
+5. **Response Chain**:
+   - OT-Node → DKG Node Server → Backend → Frontend
+   - Each step logs the UAL for verification
+
+### Plugin Location
+
+The Parallelpedia plugin is located at:
+```
+dkg-node/packages/dkg-plugin-parallelpedia/
+├── src/
+│   └── index.ts          # Main plugin code
+├── dist/                 # Compiled JavaScript
+├── README.md            # Plugin documentation
+└── package.json
+```
+
+The plugin is registered in `dkg-node/apps/agent/src/server/index.ts` and provides:
+- **MCP Tools**: For AI agents to query Community Notes
+- **REST API Endpoints**: For publishing and querying Community Notes
+- **SPARQL Query Support**: For searching published notes
+
+### Standalone Plugin Repository
+
+The plugin is also available as a separate GitHub repository for hackathon submission:
+
+**Repository**: https://github.com/denishotii/dkg-plugin-parallelpedia
+
+#### Cloning and Using the Plugin Standalone
+
+If you want to use the plugin in your own DKG Node setup:
+
+1. **Clone the plugin repository**:
+   ```bash
+   git clone https://github.com/denishotii/dkg-plugin-parallelpedia.git
+   cd dkg-plugin-parallelpedia
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Build the plugin**:
+   ```bash
+   npm run build
+   ```
+
+4. **Install in your DKG Node**:
+   ```bash
+   # In your DKG Node project
+   npm install ./path/to/dkg-plugin-parallelpedia
+   # Or if published to npm:
+   # npm install @dkg/plugin-parallelpedia
+   ```
+
+5. **Register in your DKG Node server** (`apps/agent/src/server/index.ts`):
+   ```typescript
+   import parallelpediaPlugin from "@dkg/plugin-parallelpedia";
+   
+   // In your plugin array:
+   plugins: [
+     // ... other plugins
+     parallelpediaPlugin,
+   ]
+   ```
+
+6. **Configure environment variables** in your DKG Node:
+   ```bash
+   DKG_OTNODE_URL=https://v6-pegasus-node-02.origin-trail.network:8900
+   DKG_BLOCKCHAIN=otp:20430
+   DKG_PUBLISH_WALLET=your_private_key_here
+   ```
+
+The plugin will automatically provide the `/parallelpedia/community-notes` endpoints once registered.
+
+### Verifying Published Assets
+
+After publishing, you'll receive a UAL (Unique Asset Locator). You can verify the asset:
+
+```bash
+# Using the DKG Node API
+curl "http://localhost:9200/api/dkg/assets?ual=YOUR_UAL_HERE"
+
+# Or via the plugin endpoint (if SPARQL is working)
+curl "http://localhost:9200/parallelpedia/community-notes/TOPIC_ID"
+```
+
+**Note**: SPARQL queries on remote testnet OT-Nodes may not work immediately. Use the UAL method for reliable verification.
+
 ## 🧪 Testing
 
 ### Backend
@@ -196,6 +316,12 @@ Parallelpedia/
 │   ├── package.json
 │   └── README.md
 ├── dkg-node/              # OriginTrail DKG Node
+│   ├── apps/
+│   │   └── agent/         # DKG Node server
+│   └── packages/
+│       └── dkg-plugin-parallelpedia/  # Our custom plugin
+│           ├── src/index.ts       # Plugin implementation
+│           └── README.md          # Plugin documentation
 └── README.md
 ```
 
