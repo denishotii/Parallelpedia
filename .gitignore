@@ -1,5 +1,6 @@
 .env
 # DKG Node: Include plugin and modified files, exclude build artifacts
+/dkg-node/
 /dkg-node/node_modules/
 /dkg-node/apps/agent/node_modules/
 /dkg-node/apps/agent/dist/
