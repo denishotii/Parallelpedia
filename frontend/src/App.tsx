@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Search, Scale, Network, ArrowRight
+  Search, Scale, Network, ArrowRight, CheckCircle2, ExternalLink, Copy
 } from 'lucide-react';
 import { compareTopic, publishCommunityNote } from './services/api';
 import { TopicAnalysis, Article, SegmentLabel } from './types';
@@ -25,6 +25,7 @@ function App() {
   const [wikiArticle, setWikiArticle] = useState<Article | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  const [publishedUal, setPublishedUal] = useState<string | null>(null);
   type AnalysisTab = 'evidence' | 'conflicts' | 'alignments';
   const [activeTab, setActiveTab] = useState<AnalysisTab>('evidence');
   
@@ -45,6 +46,7 @@ function App() {
         setLoading(true);
         setAnalysis(null);
         setPublished(false);
+        setPublishedUal(null);
         setGrokArticle(null);
         setWikiArticle(null);
 
@@ -90,6 +92,7 @@ function App() {
     setLoading(true);
     setAnalysis(null);
     setPublished(false);
+    setPublishedUal(null);
     setGrokArticle(null);
     setWikiArticle(null);
 
@@ -134,14 +137,24 @@ function App() {
 
     setPublishing(true);
     try {
-      await publishCommunityNote(analysis.topic_id);
+      const response = await publishCommunityNote(analysis.topic_id);
       setPublished(true);
+      setPublishedUal(response.ual || response.asset_id || null);
     } catch (error) {
       console.error('Error publishing:', error);
       alert('Error publishing Community Note. Please try again.');
     } finally {
       setPublishing(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // You could add a toast notification here if desired
+  };
+
+  const getDkgExplorerUrl = (ual: string) => {
+    return `https://dkg-testnet.origintrail.io/explore?ual=${encodeURIComponent(ual)}`;
   };
 
   return (
@@ -221,11 +234,11 @@ function App() {
                   <div className="text-xs text-gray-700 mt-1">Unsupported</div>
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="mt-6 space-y-4">
                 <button
                   onClick={handlePublish}
                   disabled={publishing || published}
-                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold transition-colors"
                 >
                   {published
                     ? '✓ Published to DKG'
@@ -233,6 +246,52 @@ function App() {
                     ? 'Publishing...'
                     : 'Publish Community Note to DKG'}
                 </button>
+                
+                {/* Success Message with UAL */}
+                {published && publishedUal && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-green-50 border-2 border-green-200 rounded-lg p-5 shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-green-900 mb-2">
+                          Successfully Published to DKG!
+                        </h3>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-1">Unique Asset Locator (UAL):</p>
+                            <div className="flex items-center gap-2 bg-white rounded-md p-2 border border-gray-200">
+                              <code className="flex-1 text-sm text-gray-800 font-mono break-all">
+                                {publishedUal}
+                              </code>
+                              <button
+                                onClick={() => copyToClipboard(publishedUal)}
+                                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                                title="Copy UAL"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <a
+                              href={getDkgExplorerUrl(publishedUal)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                            >
+                              <span>View on DKG Explorer</span>
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             </div>
 

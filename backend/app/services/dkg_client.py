@@ -17,13 +17,13 @@ class DKGClient:
             base_url: Base URL for DKG node (defaults to DKG_BASE_URL env var or localhost:9200)
         """
         self.base_url = base_url or os.getenv("DKG_BASE_URL", "http://localhost:9200")
-        # Increased timeout for DKG publishing (blockchain operations can take 60-900 seconds)
+        # Increased timeout for DKG publishing (blockchain operations can take 60-1800 seconds)
         # Set explicit timeouts: connect, read, write, pool
         timeout_config = httpx.Timeout(
             connect=30.0,  # 30 seconds to establish connection
-            read=900.0,    # 15 minutes to read response (blockchain ops can be very slow)
-            write=30.0,    # 30 seconds to write request
-            pool=30.0      # 30 seconds to get connection from pool
+            read=1800.0,   # 30 minutes to read response (blockchain ops can be very slow)
+            write=30.0,     # 30 seconds to write request
+            pool=30.0       # 30 seconds to get connection from pool
         )
         self.client = httpx.AsyncClient(timeout=timeout_config)
     
@@ -212,7 +212,7 @@ class DKGClient:
         except httpx.ReadTimeout as e:
             print(f"[DKG publish] ReadTimeout: The DKG node server took too long to respond.")
             print(f"  This usually means the OT-Node connection is slow or the blockchain operation is taking longer than expected.")
-            print(f"  Current timeout: 15 minutes. If this persists, the DKG node server may need more time.")
+            print(f"  Current timeout: 30 minutes. If this persists, the DKG node server may need more time.")
             print(f"  Error details: {e}")
             return None
         except httpx.TimeoutException as e:
