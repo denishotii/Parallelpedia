@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   Brain, AlertTriangle, Search, Shield, Zap, Database, 
-  GitBranch, Code, Layers, CheckCircle2, XCircle, 
-  AlertCircle, HelpCircle, ArrowRight, Sparkles, TrendingUp,
+  Code, Layers, CheckCircle2, XCircle, 
+  AlertCircle, HelpCircle, ArrowRight, TrendingUp,
   FileText, Cpu, Network, Link2, BarChart3, Activity,
-  Server, Cloud, Globe, Github, ExternalLink, ChevronDown, ChevronUp
+  Globe, Github, ExternalLink, Scale, ChevronUp, ChevronDown
 } from 'lucide-react';
 import logoFull from '../logo/logo-with-name.svg';
 
@@ -37,7 +37,7 @@ const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: "-100px" },
-  transition: { duration: 0.6, ease: "easeOut" }
+  transition: { duration: 0.6 }
 };
 
 const staggerContainer = {
@@ -491,16 +491,16 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">How Parallelpedia Works</h2>
           </motion.div>
           
-          {/* Numbered Flow Graphic */}
+          {/* Unified Flow Graphic */}
           <motion.div
             {...fadeInUp}
             className="mb-16 bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8 md:p-12 border-2 border-blue-200"
           >
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
               {[
-                { num: 1, icon: Search, emoji: '🔎', title: 'Fetch Articles', desc: 'Grokipedia + Wikipedia' },
-                { num: 2, icon: Brain, emoji: '🧠', title: 'Compare & Analyze', desc: 'AI-powered comparison' },
-                { num: 3, icon: Link2, emoji: '🔗', title: 'Publish to DKG', desc: 'Verifiable Community Notes' },
+                { num: 1, icon: Search, title: 'Search a topic', desc: 'Type an AI encyclopedia topic (e.g., "Elon Musk")' },
+                { num: 2, icon: Scale, title: 'Compare articles', desc: 'We line up Grokipedia vs Wikipedia and compute a trust score' },
+                { num: 3, icon: Network, title: 'Publish to DKG', desc: 'Generate a community note and anchor it on OriginTrail DKG' },
               ].map((step, idx) => (
                 <React.Fragment key={idx}>
                   <motion.div
@@ -509,16 +509,18 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.2 }}
                     whileHover={{ scale: 1.05, y: -5 }}
-                    className="flex flex-col items-center text-center p-6 bg-white rounded-2xl border-2 border-blue-200 shadow-lg min-w-[200px]"
+                    className="flex flex-col items-center text-center p-8 bg-white rounded-2xl border-2 border-blue-200 shadow-lg min-w-[240px]"
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
                         {step.num}
                       </div>
-                      <div className="text-4xl">{step.emoji}</div>
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <step.icon className="w-6 h-6 text-blue-600" />
+                      </div>
                     </div>
-                    <h3 className="font-bold text-gray-900 mb-1 text-lg">{step.title}</h3>
-                    <p className="text-gray-600 text-sm">{step.desc}</p>
+                    <h3 className="font-bold text-gray-900 mb-2 text-xl">{step.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
                   </motion.div>
                   {idx < 2 && (
                     <ArrowRight className="w-8 h-8 text-blue-400 hidden md:block flex-shrink-0" />
@@ -526,36 +528,6 @@ export default function LandingPage() {
                 </React.Fragment>
               ))}
             </div>
-          </motion.div>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="whileInView"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid md:grid-cols-3 gap-8 mb-16"
-          >
-            {[
-              { num: 1, icon: Search, emoji: '🔎', title: 'Search a topic', desc: 'Type an AI encyclopedia topic (e.g., "Elon Musk").' },
-              { num: 2, icon: GitBranch, emoji: '⚖️', title: 'Compare articles', desc: 'We line up Grokipedia vs Wikipedia and compute a trust score.' },
-              { num: 3, icon: Network, emoji: '🕸️', title: 'Publish to DKG', desc: 'Generate a community note and anchor it on OriginTrail DKG.' },
-            ].map((step, idx) => (
-              <motion.div
-                key={idx}
-                variants={staggerItem}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="p-8 rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-lg hover:shadow-xl transition-all"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold shadow-md">
-                    {step.num}
-                  </div>
-                  <div className="text-3xl">{step.emoji}</div>
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-xl">{step.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
-              </motion.div>
-            ))}
           </motion.div>
 
           {/* Try It Examples */}
@@ -769,7 +741,7 @@ export default function LandingPage() {
           {/* Four-Tier Classification */}
           <motion.div
             {...fadeInUp}
-            className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-3xl border-2 border-indigo-200 p-10 shadow-xl"
+            className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-3xl border-2 border-indigo-200 p-10 shadow-xl mb-12"
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Four-Tier Classification System</h3>
             <div className="grid md:grid-cols-4 gap-6">
@@ -795,6 +767,75 @@ export default function LandingPage() {
                 </motion.div>
               ))}
             </div>
+          </motion.div>
+
+          {/* Multi-Layer Trust System - Merged */}
+          <motion.div
+            {...fadeInUp}
+            className="bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 rounded-3xl border-2 border-blue-200 p-10 shadow-xl"
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Multi-Layer Trust Architecture</h3>
+            <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+              Our system operates across three interconnected layers: Agent Layer for AI integration, Reasoning Layer for intelligent analysis, and Trust Layer for verifiable provenance.
+            </p>
+            <div className="grid md:grid-cols-3 gap-8 mb-8">
+              {[
+                {
+                  layer: 'Agent Layer',
+                  icon: Brain,
+                  desc: 'AI agents query Community Notes via MCP tools, making informed decisions about content reliability.',
+                  color: 'blue',
+                  features: ['MCP Protocol', 'AI Agent Integration', 'Query Interface']
+                },
+                {
+                  layer: 'Reasoning Layer',
+                  icon: Cpu,
+                  desc: 'Multi-layered AI analysis engine with semantic embeddings, NER, fact extraction, and LLM classification.',
+                  color: 'purple',
+                  features: ['Semantic Analysis', 'LLM Classification', 'Trust Scoring']
+                },
+                {
+                  layer: 'Trust Layer',
+                  icon: Shield,
+                  desc: 'OriginTrail DKG provides tamper-resistant, verifiable Knowledge Assets with full provenance.',
+                  color: 'green',
+                  features: ['DKG Blockchain', 'Knowledge Assets', 'Provenance']
+                },
+              ].map((layer, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.2 }}
+                  whileHover={{ scale: 1.03, y: -5 }}
+                  className={`bg-white rounded-2xl border-2 ${layer.color === 'blue' ? 'border-blue-200' : layer.color === 'purple' ? 'border-purple-200' : 'border-green-200'} p-8 shadow-lg`}
+                >
+                  <div className={`w-16 h-16 rounded-xl ${layer.color === 'blue' ? 'bg-blue-100' : layer.color === 'purple' ? 'bg-purple-100' : 'bg-green-100'} flex items-center justify-center mb-4`}>
+                    <layer.icon className={`w-8 h-8 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{layer.layer}</h3>
+                  <p className="text-sm text-gray-700 mb-4 leading-relaxed">{layer.desc}</p>
+                  <ul className="space-y-2">
+                    {layer.features.map((feature, fIdx) => (
+                      <li key={fIdx} className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle2 className={`w-4 h-4 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+            {/* Connecting Flow */}
+            <motion.div
+              {...fadeInUp}
+              className="flex items-center justify-center gap-4 text-gray-400"
+            >
+              <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-purple-300" />
+              <ArrowRight className="w-6 h-6" />
+              <div className="flex-1 h-0.5 bg-gradient-to-r from-purple-300 via-green-300 to-transparent" />
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -1000,108 +1041,9 @@ export default function LandingPage() {
             ))}
           </motion.div>
 
-          <motion.div
-            {...fadeInUp}
-            className="bg-white rounded-3xl border-2 border-blue-200 p-10 shadow-xl"
-          >
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Real-World Use Cases</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { icon: '🧑‍💻', title: 'Researchers & Journalists', desc: 'Quickly verify AI-generated bios and claims before using them in research or articles.' },
-                { icon: '👩‍💻', title: 'Developers', desc: 'Integrate AI encyclopedias with a trust layer in your applications using our API and MCP tools.' },
-                { icon: '📚', title: 'Curious Readers', desc: 'Get transparency on AI content and understand what\'s verified vs. what\'s potentially unreliable.' },
-              ].map((useCase, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  whileHover={{ scale: 1.03 }}
-                  className="p-6 rounded-xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 shadow-md"
-                >
-                  <div className="text-4xl mb-3">{useCase.icon}</div>
-                  <h4 className="font-semibold text-gray-900 mb-2">{useCase.title}</h4>
-                  <p className="text-sm text-gray-700">{useCase.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </div>
       </section>
 
-      {/* 3-Layer Architecture - DoraHacks Alignment */}
-      <section className="py-24 bg-gradient-to-b from-gray-50 to-white" id="layers" data-reveal>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeInUp} className="text-center mb-16">
-            <SectionBadge icon={Layers} label="Three-Layer Architecture" />
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Multi-Layer Trust System</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Aligned with DoraHacks judging criteria: Agent Layer, Reasoning Layer, and Trust Layer
-            </p>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {[
-              {
-                layer: 'Agent Layer',
-                icon: Brain,
-                desc: 'AI agents query Community Notes via MCP tools, making informed decisions about content reliability.',
-                color: 'blue',
-                features: ['MCP Protocol', 'AI Agent Integration', 'Query Interface']
-              },
-              {
-                layer: 'Reasoning Layer',
-                icon: Cpu,
-                desc: 'Multi-layered AI analysis engine with semantic embeddings, NER, fact extraction, and LLM classification.',
-                color: 'purple',
-                features: ['Semantic Analysis', 'LLM Classification', 'Trust Scoring']
-              },
-              {
-                layer: 'Trust Layer',
-                icon: Shield,
-                desc: 'OriginTrail DKG provides tamper-resistant, verifiable Knowledge Assets with full provenance.',
-                color: 'green',
-                features: ['DKG Blockchain', 'Knowledge Assets', 'Provenance']
-              },
-            ].map((layer, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.2 }}
-                whileHover={{ scale: 1.03, y: -5 }}
-                className={`bg-white rounded-2xl border-2 ${layer.color === 'blue' ? 'border-blue-200' : layer.color === 'purple' ? 'border-purple-200' : 'border-green-200'} p-8 shadow-lg`}
-              >
-                <div className={`w-16 h-16 rounded-xl ${layer.color === 'blue' ? 'bg-blue-100' : layer.color === 'purple' ? 'bg-purple-100' : 'bg-green-100'} flex items-center justify-center mb-4`}>
-                  <layer.icon className={`w-8 h-8 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{layer.layer}</h3>
-                <p className="text-sm text-gray-700 mb-4 leading-relaxed">{layer.desc}</p>
-                <ul className="space-y-2">
-                  {layer.features.map((feature, fIdx) => (
-                    <li key={fIdx} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle2 className={`w-4 h-4 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </div>
-          
-          {/* Connecting Flow */}
-          <motion.div
-            {...fadeInUp}
-            className="flex items-center justify-center gap-4 text-gray-400"
-          >
-            <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-purple-300" />
-            <ArrowRight className="w-6 h-6" />
-            <div className="flex-1 h-0.5 bg-gradient-to-r from-purple-300 via-green-300 to-transparent" />
-          </motion.div>
-        </div>
-      </section>
 
       {/* Architecture & Technical Details - Enhanced */}
       <section className="py-24 bg-white" id="architecture" data-reveal>
@@ -1114,31 +1056,34 @@ export default function LandingPage() {
             </p>
           </motion.div>
           
-          {/* Architecture Diagram */}
+          {/* Architecture Diagram - Light Theme */}
           <motion.div
             {...fadeInUp}
-            className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-10 md:p-16 shadow-2xl mb-12"
+            className="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-3xl p-10 md:p-16 shadow-2xl mb-12 border-2 border-blue-200"
           >
-            <h3 className="text-2xl font-bold text-white mb-10 text-center">System Architecture</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-10 text-center">System Architecture</h3>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
                   title: 'Frontend',
                   color: 'blue',
                   items: ['React 18', 'TypeScript', 'Vite', 'TailwindCSS', 'React Router'],
-                  icon: Code
+                  icon: Code,
+                  gradient: 'from-blue-100 to-blue-50'
                 },
                 {
                   title: 'Backend',
                   color: 'green',
                   items: ['FastAPI', 'Embeddings Engine', 'LLM Classifier', 'DKG Client', 'Python'],
-                  icon: Cpu
+                  icon: Cpu,
+                  gradient: 'from-green-100 to-green-50'
                 },
                 {
                   title: 'DKG Integration',
                   color: 'purple',
                   items: ['Custom Plugin', 'MCP Tools', 'REST API', 'JSON-LD Assets', 'OriginTrail'],
-                  icon: Network
+                  icon: Network,
+                  gradient: 'from-purple-100 to-purple-50'
                 },
               ].map((stack, idx) => (
                 <motion.div
@@ -1147,16 +1092,19 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.2 }}
-                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  className={`bg-gradient-to-br ${stack.gradient} rounded-2xl p-6 border-2 ${stack.color === 'blue' ? 'border-blue-200' : stack.color === 'green' ? 'border-green-200' : 'border-purple-200'} shadow-lg`}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <stack.icon className={`w-8 h-8 ${stack.color === 'blue' ? 'text-blue-400' : stack.color === 'green' ? 'text-green-400' : 'text-purple-400'}`} />
-                    <h4 className="text-xl font-bold text-white">{stack.title}</h4>
+                    <div className={`w-12 h-12 rounded-xl ${stack.color === 'blue' ? 'bg-blue-600' : stack.color === 'green' ? 'bg-green-600' : 'bg-purple-600'} flex items-center justify-center`}>
+                      <stack.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h4 className="text-xl font-bold text-gray-900">{stack.title}</h4>
                   </div>
                   <ul className="space-y-2">
                     {stack.items.map((item, itemIdx) => (
-                      <li key={itemIdx} className="flex items-center gap-2 text-gray-300 text-sm">
-                        <div className={`w-2 h-2 rounded-full ${stack.color === 'blue' ? 'bg-blue-400' : stack.color === 'green' ? 'bg-green-400' : 'bg-purple-400'}`} />
+                      <li key={itemIdx} className="flex items-center gap-2 text-gray-700 text-sm">
+                        <div className={`w-2 h-2 rounded-full ${stack.color === 'blue' ? 'bg-blue-600' : stack.color === 'green' ? 'bg-green-600' : 'bg-purple-600'}`} />
                         {item}
                       </li>
                     ))}
@@ -1164,9 +1112,9 @@ export default function LandingPage() {
                 </motion.div>
               ))}
             </div>
-            <div className="mt-8 flex items-center justify-center gap-4 text-white/60 text-sm">
+            <div className="mt-8 flex items-center justify-center gap-4 text-gray-600 text-sm">
               <ArrowRight className="w-5 h-5" />
-              <span>Data Flow</span>
+              <span className="font-semibold">Data Flow</span>
               <ArrowRight className="w-5 h-5" />
             </div>
           </motion.div>
@@ -1384,7 +1332,7 @@ export default function LandingPage() {
                 rel="noopener noreferrer"
               >
                 <ExternalLink className="w-4 h-4" />
-                DoraHacks
+                OriginTrail Scaling Trust & AI Hackathon
               </a>
             </div>
           </div>
