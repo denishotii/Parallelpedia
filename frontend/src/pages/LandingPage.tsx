@@ -5,7 +5,8 @@ import {
   Brain, AlertTriangle, Search, Shield, Zap, Database, 
   GitBranch, Code, Layers, CheckCircle2, XCircle, 
   AlertCircle, HelpCircle, ArrowRight, Sparkles, TrendingUp,
-  FileText, Cpu, Network, Link2, BarChart3, Activity
+  FileText, Cpu, Network, Link2, BarChart3, Activity,
+  Server, Cloud, Globe, Github, ExternalLink, ChevronDown, ChevronUp
 } from 'lucide-react';
 import logoFull from '../logo/logo-with-name.svg';
 
@@ -132,7 +133,7 @@ export default function LandingPage() {
       {/* Hero with Animation */}
       <section ref={heroRef} className="relative overflow-hidden min-h-[90vh] flex items-center">
         {/* Animated Background */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none animate-gradient">
           <div className="absolute inset-x-0 top-0 h-[50vh] bg-gradient-to-b from-blue-50 via-purple-50 to-transparent" />
           <motion.div 
             className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-3xl opacity-60"
@@ -158,23 +159,25 @@ export default function LandingPage() {
               ease: "easeInOut"
             }}
           />
-          {/* Subtle sparkles */}
-          {[...Array(20)].map((_, i) => (
+          {/* Subtle floating particles */}
+          {[...Array(15)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1 h-1 bg-blue-400 rounded-full"
+              className="absolute w-1.5 h-1.5 bg-blue-400/20 rounded-full"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
+                left: `${10 + (i * 6)}%`,
+                top: `${10 + (i * 5)}%`,
               }}
               animate={{
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
+                opacity: [0.05, 0.15, 0.05],
+                scale: [0.5, 1, 0.5],
+                y: [0, -20, 0],
               }}
               transition={{
-                duration: 3 + Math.random() * 2,
+                duration: 4 + Math.random() * 3,
                 repeat: Infinity,
                 delay: Math.random() * 2,
+                ease: "easeInOut"
               }}
             />
           ))}
@@ -186,9 +189,9 @@ export default function LandingPage() {
         >
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
+              initial={{ opacity: 0, x: -30, y: 20 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
               className="space-y-6 max-w-xl"
             >
               <div className="inline-flex items-center gap-2">
@@ -231,9 +234,9 @@ export default function LandingPage() {
               </div>
             </motion.div>
             <motion.div 
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={{ opacity: 0, x: 30, y: 20 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
               className="flex justify-center md:justify-end"
             >
               <div
@@ -303,7 +306,7 @@ export default function LandingPage() {
               { 
                 num: 1, 
                 icon: Brain, 
-                emoji: '🧠',
+                emoji: '',
                 title: 'AI Encyclopedias Hallucinate', 
                 desc: 'AI encyclopedias can generate plausible-sounding but false information, making it difficult to distinguish fact from fiction.',
                 bg: 'from-red-50 to-rose-50',
@@ -313,7 +316,7 @@ export default function LandingPage() {
               { 
                 num: 2, 
                 icon: Search, 
-                emoji: '⚖️',
+                emoji: '',
                 title: 'Lack of Verification', 
                 desc: 'No systematic way to verify AI-generated content against trusted sources or detect subtle biases and missing context.',
                 bg: 'from-yellow-50 to-amber-50',
@@ -323,7 +326,7 @@ export default function LandingPage() {
               { 
                 num: 3, 
                 icon: Shield, 
-                emoji: '🔗',
+                emoji: '',
                 title: 'No Trust Layer', 
                 desc: 'AI agents and applications lack access to verifiable trust signals about the content they consume and generate.',
                 bg: 'from-blue-50 to-indigo-50',
@@ -334,18 +337,18 @@ export default function LandingPage() {
               <motion.div
                 key={idx}
                 variants={staggerItem}
-                whileHover={{ scale: 1.03, y: -5 }}
-                className={`p-8 rounded-2xl border-2 ${problem.border} bg-gradient-to-br ${problem.bg} shadow-lg hover:shadow-xl transition-all`}
+                whileHover={{ scale: 1.02, y: -5 }}
+                className={`p-8 rounded-2xl border-2 ${problem.border} bg-gradient-to-br ${problem.bg} shadow-md hover:shadow-xl transition-all`}
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-12 h-12 rounded-full bg-white ${problem.border} border-2 flex items-center justify-center ${problem.iconColor}`}>
-                    <problem.icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">Problem #{problem.num}</div>
-                    <div className="text-2xl">{problem.emoji}</div>
-                  </div>
+              <div className="flex items-center gap-4 mb-4">
+                <div className={`w-16 h-16 rounded-xl bg-white ${problem.border} border-2 flex items-center justify-center shadow-md`}>
+                  <problem.icon className={`w-8 h-8 ${problem.iconColor}`} />
                 </div>
+                <div>
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Problem #{problem.num}</div>
+                  <div className="text-3xl">{problem.emoji}</div>
+                </div>
+              </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{problem.title}</h3>
                 <p className="text-sm text-gray-700 leading-relaxed">{problem.desc}</p>
               </motion.div>
@@ -364,6 +367,40 @@ export default function LandingPage() {
               Parallelpedia is a complete trust verification system that compares AI-generated content with Wikipedia, detects issues, and publishes verifiable Community Notes to the OriginTrail DKG.
             </p>
           </motion.div>
+          {/* Central Visual - Trust Card Mockup */}
+          <motion.div
+            {...fadeInUp}
+            className="mb-16 flex justify-center"
+          >
+            <div className="bg-white rounded-3xl border-2 border-blue-200 shadow-2xl p-8 max-w-2xl w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Trust Analysis</h3>
+                <div className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">84/100</div>
+              </div>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-sm font-medium text-gray-700">✅ Aligned</span>
+                  <span className="text-sm font-bold text-green-700">42 segments</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <span className="text-sm font-medium text-gray-700">⚠️ Missing Context</span>
+                  <span className="text-sm font-bold text-yellow-700">12 segments</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                  <span className="text-sm font-medium text-gray-700">✗ Conflicts</span>
+                  <span className="text-sm font-bold text-red-700">7 segments</span>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-gray-200">
+                <div className="text-xs text-gray-500 mb-2">Published to OriginTrail DKG</div>
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <Link2 className="w-4 h-4" />
+                  <span className="font-mono">did:dkg:otp:20430/0xcdb2...</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           <motion.div 
             variants={staggerContainer}
             initial="initial"
@@ -454,6 +491,43 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">How Parallelpedia Works</h2>
           </motion.div>
           
+          {/* Numbered Flow Graphic */}
+          <motion.div
+            {...fadeInUp}
+            className="mb-16 bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8 md:p-12 border-2 border-blue-200"
+          >
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+              {[
+                { num: 1, icon: Search, emoji: '🔎', title: 'Fetch Articles', desc: 'Grokipedia + Wikipedia' },
+                { num: 2, icon: Brain, emoji: '🧠', title: 'Compare & Analyze', desc: 'AI-powered comparison' },
+                { num: 3, icon: Link2, emoji: '🔗', title: 'Publish to DKG', desc: 'Verifiable Community Notes' },
+              ].map((step, idx) => (
+                <React.Fragment key={idx}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.2 }}
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    className="flex flex-col items-center text-center p-6 bg-white rounded-2xl border-2 border-blue-200 shadow-lg min-w-[200px]"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
+                        {step.num}
+                      </div>
+                      <div className="text-4xl">{step.emoji}</div>
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-1 text-lg">{step.title}</h3>
+                    <p className="text-gray-600 text-sm">{step.desc}</p>
+                  </motion.div>
+                  {idx < 2 && (
+                    <ArrowRight className="w-8 h-8 text-blue-400 hidden md:block flex-shrink-0" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </motion.div>
+
           <motion.div
             variants={staggerContainer}
             initial="initial"
@@ -508,40 +582,48 @@ export default function LandingPage() {
             className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-3xl p-12 border-2 border-purple-200 shadow-xl"
           >
             <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Your Trust X-ray for AI Articles</h3>
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-12 items-start">
               <div className="space-y-6">
-                {[
-                  { icon: Search, title: 'Detect missing context', desc: 'See what one source omits.' },
-                  { icon: AlertTriangle, title: 'Flag conflicts', desc: 'Catch contradictions instantly.' },
-                  { icon: HelpCircle, title: 'Highlight unsupported', desc: 'Spot claims lacking evidence.' },
-                ].map((item, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-white/80 backdrop-blur-sm shadow-sm"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900 mb-1">{item.title}</div>
-                      <div className="text-sm text-gray-700">{item.desc}</div>
-                    </div>
-                  </motion.div>
-                ))}
+                <h4 className="font-bold text-gray-900 text-lg mb-4">Example Analysis</h4>
+                {/* Aligned Example */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="p-4 rounded-xl bg-green-50 border border-green-200"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    <span className="font-semibold text-green-700 text-sm">Aligned Example</span>
+                  </div>
+                  <p className="text-xs text-gray-700 italic">"Elon Musk was born in 1971 in Pretoria, South Africa."</p>
+                  <p className="text-xs text-gray-600 mt-1">✓ Matches Wikipedia closely</p>
+                </motion.div>
+                {/* Conflict Example */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="p-4 rounded-xl bg-red-50 border border-red-200"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span className="font-semibold text-red-700 text-sm">Conflict Example</span>
+                  </div>
+                  <p className="text-xs text-gray-700 italic">"Musk pledged $1B, contributed $45M" vs "Musk pledged $1B, gave $50M"</p>
+                  <p className="text-xs text-gray-600 mt-1">✗ Contradictory facts detected</p>
+                </motion.div>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   onClick={() => navigate('/app')}
-                  className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-2"
+                  className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-2 mt-4"
                 >
                   Open in app <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-500 mb-2">Example trust profile breakdown</div>
+              <div>
+                <h4 className="font-bold text-gray-900 text-lg mb-4 text-center">Trust Profile Breakdown</h4>
                 <div className="space-y-3">
                   {[
                     { label: 'Aligned', value: 42, color: 'bg-green-500', width: 'w-[70%]' },
@@ -573,7 +655,7 @@ export default function LandingPage() {
                     </motion.div>
                   ))}
                 </div>
-                <div className="mt-4 text-sm text-gray-600">
+                <div className="mt-4 text-sm text-gray-600 text-center">
                   Parallelpedia turns long AI articles into a concise trust profile you can skim in seconds.
                 </div>
               </div>
@@ -948,6 +1030,79 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 3-Layer Architecture - DoraHacks Alignment */}
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white" id="layers" data-reveal>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div {...fadeInUp} className="text-center mb-16">
+            <SectionBadge icon={Layers} label="Three-Layer Architecture" />
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Multi-Layer Trust System</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Aligned with DoraHacks judging criteria: Agent Layer, Reasoning Layer, and Trust Layer
+            </p>
+          </motion.div>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {[
+              {
+                layer: 'Agent Layer',
+                icon: Brain,
+                desc: 'AI agents query Community Notes via MCP tools, making informed decisions about content reliability.',
+                color: 'blue',
+                features: ['MCP Protocol', 'AI Agent Integration', 'Query Interface']
+              },
+              {
+                layer: 'Reasoning Layer',
+                icon: Cpu,
+                desc: 'Multi-layered AI analysis engine with semantic embeddings, NER, fact extraction, and LLM classification.',
+                color: 'purple',
+                features: ['Semantic Analysis', 'LLM Classification', 'Trust Scoring']
+              },
+              {
+                layer: 'Trust Layer',
+                icon: Shield,
+                desc: 'OriginTrail DKG provides tamper-resistant, verifiable Knowledge Assets with full provenance.',
+                color: 'green',
+                features: ['DKG Blockchain', 'Knowledge Assets', 'Provenance']
+              },
+            ].map((layer, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.2 }}
+                whileHover={{ scale: 1.03, y: -5 }}
+                className={`bg-white rounded-2xl border-2 ${layer.color === 'blue' ? 'border-blue-200' : layer.color === 'purple' ? 'border-purple-200' : 'border-green-200'} p-8 shadow-lg`}
+              >
+                <div className={`w-16 h-16 rounded-xl ${layer.color === 'blue' ? 'bg-blue-100' : layer.color === 'purple' ? 'bg-purple-100' : 'bg-green-100'} flex items-center justify-center mb-4`}>
+                  <layer.icon className={`w-8 h-8 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{layer.layer}</h3>
+                <p className="text-sm text-gray-700 mb-4 leading-relaxed">{layer.desc}</p>
+                <ul className="space-y-2">
+                  {layer.features.map((feature, fIdx) => (
+                    <li key={fIdx} className="flex items-center gap-2 text-sm text-gray-600">
+                      <CheckCircle2 className={`w-4 h-4 ${layer.color === 'blue' ? 'text-blue-600' : layer.color === 'purple' ? 'text-purple-600' : 'text-green-600'}`} />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+          
+          {/* Connecting Flow */}
+          <motion.div
+            {...fadeInUp}
+            className="flex items-center justify-center gap-4 text-gray-400"
+          >
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-purple-300" />
+            <ArrowRight className="w-6 h-6" />
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-purple-300 via-green-300 to-transparent" />
+          </motion.div>
+        </div>
+      </section>
+
       {/* Architecture & Technical Details - Enhanced */}
       <section className="py-24 bg-white" id="architecture" data-reveal>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1082,21 +1237,25 @@ export default function LandingPage() {
             <SectionBadge icon={HelpCircle} label="FAQ" />
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
           </motion.div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
               { 
+                icon: Database,
                 q: 'Where are the Community Notes stored?', 
                 a: 'Community Notes are published as Knowledge Assets on the OriginTrail Decentralized Knowledge Graph (DKG). They are stored on-chain with full provenance and can be queried via our DKG plugin\'s MCP tools or REST API.' 
               },
               { 
+                icon: FileText,
                 q: 'Does Parallelpedia modify Wikipedia?', 
                 a: 'No. Parallelpedia analyzes content and produces structured Community Notes; it does not modify source articles. It\'s a read-only analysis tool that creates verifiable trust signals.' 
               },
               { 
+                icon: Network,
                 q: 'What is DKG?', 
                 a: 'DKG (Decentralized Knowledge Graph) is OriginTrail\'s blockchain-based system for creating verifiable, tamper-resistant knowledge assets. It enables AI agents and applications to access trusted, provenance-verified information.' 
               },
               { 
+                icon: Brain,
                 q: 'How do AI agents use this data?', 
                 a: 'AI agents can query Community Notes via MCP (Model Context Protocol) tools. They can search by topic, trust score, or keywords to make informed decisions about content reliability before using it in their responses.' 
               },
@@ -1107,21 +1266,29 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="rounded-2xl border-2 border-gray-200 bg-white shadow-md overflow-hidden"
+                className="rounded-xl border-2 border-gray-200 bg-white shadow-sm hover:shadow-md overflow-hidden transition-all"
               >
                 <button
-                  className="w-full text-left p-6 font-semibold text-gray-900 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  className="w-full text-left p-5 font-semibold text-gray-900 flex items-center justify-between hover:bg-gray-50 transition-colors gap-4"
                   onClick={() => setOpenFaqIdx(openFaqIdx === idx ? null : idx)}
                 >
-                  <span>{item.q}</span>
-                  <span className="text-gray-400 text-xl">{openFaqIdx === idx ? '−' : '+'}</span>
+                  <div className="flex items-center gap-3 flex-1">
+                    <item.icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <span className="text-base">{item.q}</span>
+                  </div>
+                  {openFaqIdx === idx ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  )}
                 </button>
                 {openFaqIdx === idx && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="px-6 pb-6"
+                    transition={{ duration: 0.3 }}
+                    className="px-5 pb-5 pl-12"
                   >
                     <p className="text-sm text-gray-700 leading-relaxed">{item.a}</p>
                   </motion.div>
@@ -1180,19 +1347,49 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 border-t bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-gray-600 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="font-medium">Parallelpedia — Auditing AI encyclopedias, one article at a time.</div>
-          <div className="flex items-center gap-6">
-            <a className="hover:underline font-semibold text-gray-800 transition-colors" href="/app">Open app →</a>
-            <a 
-              className="hover:underline font-semibold text-gray-800 transition-colors" 
-              href="https://github.com/denishotii/dkg-plugin-parallelpedia"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub →
-            </a>
+      <footer className="py-12 border-t bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+            <div className="font-medium text-gray-700">Parallelpedia — Auditing AI encyclopedias, one article at a time.</div>
+            <div className="flex items-center gap-4 flex-wrap justify-center">
+              <a 
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors" 
+                href="/app"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open App
+              </a>
+              <a 
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors" 
+                href="https://github.com/denishotii/dkg-plugin-parallelpedia"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className="w-4 h-4" />
+                GitHub
+              </a>
+              <a 
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-purple-600 transition-colors" 
+                href="https://explorer.origintrail.io"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Globe className="w-4 h-4" />
+                DKG Explorer
+              </a>
+              <a 
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-orange-600 transition-colors" 
+                href="https://dorahacks.io"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="w-4 h-4" />
+                DoraHacks
+              </a>
+            </div>
+          </div>
+          <div className="text-center text-xs text-gray-500 pt-4 border-t border-gray-200">
+            Built for the OriginTrail Scaling Trust & AI Hackathon
           </div>
         </div>
       </footer>
