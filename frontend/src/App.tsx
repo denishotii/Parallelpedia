@@ -1,5 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { 
+  Search, Scale, Network, ArrowRight
+} from 'lucide-react';
 import { compareTopic, publishCommunityNote } from './services/api';
 import { TopicAnalysis, Article, SegmentLabel } from './types';
 import { TrustScore } from './components/TrustScore';
@@ -7,8 +11,13 @@ import logoFull from './logo/logo-with-name.svg';
 import { SegmentComparison } from './components/SegmentComparison';
 import { HighlightedArticleView } from './components/HighlightedArticleView';
 
+// Helper to format topic names
+const formatTopicName = (topic: string) => {
+  return topic.replace(/_/g, ' ');
+};
+
 function App() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [topicId, setTopicId] = useState('');
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<TopicAnalysis | null>(null);
@@ -162,11 +171,11 @@ function App() {
               value={topicId}
               onChange={(e) => setTopicId(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleCompare()}
-              placeholder="Enter topic (e.g., 'Climate_change', 'Artificial_intelligence')"
+              placeholder="Enter topic (e.g., 'Climate change', 'Artificial intelligence')"
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <button
-              onClick={handleCompare}
+              onClick={() => handleCompare()}
               disabled={loading || !topicId.trim()}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
             >
@@ -326,13 +335,65 @@ function App() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty State - Enhanced */}
         {!analysis && !loading && (
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">Enter a topic above to start comparing</p>
-            <p className="text-sm mt-2">
-              Try topics like: "Climate_change", "Artificial_intelligence", "Quantum_mechanics"
-            </p>
+          <div className="space-y-12">
+            {/* How It Works */}
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 border-2 border-blue-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">How It Works</h2>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+                {[
+                  { num: 1, icon: Search, title: 'Search a topic', desc: 'Type an AI encyclopedia topic' },
+                  { num: 2, icon: Scale, title: 'Compare articles', desc: 'We compute a trust score' },
+                  { num: 3, icon: Network, title: 'Publish to DKG', desc: 'Generate verifiable Community Notes' },
+                ].map((step, idx) => (
+                  <React.Fragment key={idx}>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.2 }}
+                      className="flex flex-col items-center text-center p-6 bg-white rounded-xl border-2 border-blue-200 shadow-lg min-w-[200px]"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold shadow-md">
+                          {step.num}
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <step.icon className="w-5 h-5 text-blue-600" />
+                        </div>
+                      </div>
+                      <h3 className="font-bold text-gray-900 mb-1">{step.title}</h3>
+                      <p className="text-sm text-gray-600">{step.desc}</p>
+                    </motion.div>
+                    {idx < 2 && (
+                      <ArrowRight className="w-6 h-6 text-blue-400 hidden md:block flex-shrink-0" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* Try Examples */}
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Try It With One Click</h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {['Elon_Musk', 'Artificial_intelligence', 'Climate_change'].map((topic, idx) => (
+                  <motion.button
+                    key={idx}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setTopicId(topic);
+                      handleCompare(topic);
+                    }}
+                    className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  >
+                    {formatTopicName(topic)}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
       </main>
