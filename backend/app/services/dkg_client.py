@@ -17,13 +17,13 @@ class DKGClient:
             base_url: Base URL for DKG node (defaults to DKG_BASE_URL env var or localhost:9200)
         """
         self.base_url = base_url or os.getenv("DKG_BASE_URL", "http://localhost:9200")
-        # Increased timeout for DKG publishing (blockchain operations can take 60-900 seconds)
+        # Increased timeout for DKG publishing (blockchain operations can take 60-1800 seconds)
         # Set explicit timeouts: connect, read, write, pool
         timeout_config = httpx.Timeout(
             connect=30.0,  # 30 seconds to establish connection
-            read=900.0,    # 15 minutes to read response (blockchain ops can be very slow)
-            write=30.0,    # 30 seconds to write request
-            pool=30.0      # 30 seconds to get connection from pool
+            read=1800.0,   # 30 minutes to read response (blockchain ops can be very slow)
+            write=30.0,     # 30 seconds to write request
+            pool=30.0       # 30 seconds to get connection from pool
         )
         self.client = httpx.AsyncClient(timeout=timeout_config)
     
@@ -148,8 +148,12 @@ class DKGClient:
         
         try:
             # Use the Parallelpedia plugin API endpoint for publishing
+            publish_url = f"{self.base_url}/parallelpedia/community-notes"
+            print(f"[DKG publish] Connecting to DKG node server at: {self.base_url}")
+            print(f"[DKG publish] Publishing to: {publish_url}")
+            
             response = await self.client.post(
-                f"{self.base_url}/parallelpedia/community-notes",
+                publish_url,
                 json={
                     "topicId": note.topic_id,
                     "trustScore": note.trust_score,
@@ -195,10 +199,20 @@ class DKGClient:
                 error_msg = result.get("error", "Unknown error")
                 print(f"   Error message: {error_msg}")
             return None
+        except httpx.ConnectError as e:
+            print(f"\n❌ [DKG publish] CONNECTION ERROR: Cannot connect to DKG node server!")
+            print(f"   Attempted URL: {self.base_url}")
+            print(f"   Error: {e}")
+            print(f"\n   🔧 SOLUTION: Make sure the DKG node server is running:")
+            print(f"      1. Navigate to: dkg-node/apps/agent")
+            print(f"      2. Run: npm run dev")
+            print(f"      3. Wait for: 'Server running at http://localhost:9200/'")
+            print(f"      4. Then try publishing again\n")
+            return None
         except httpx.ReadTimeout as e:
             print(f"[DKG publish] ReadTimeout: The DKG node server took too long to respond.")
             print(f"  This usually means the OT-Node connection is slow or the blockchain operation is taking longer than expected.")
-            print(f"  Current timeout: 15 minutes. If this persists, the DKG node server may need more time.")
+            print(f"  Current timeout: 30 minutes. If this persists, the DKG node server may need more time.")
             print(f"  Error details: {e}")
             return None
         except httpx.TimeoutException as e:
@@ -206,7 +220,7 @@ class DKGClient:
             print(f"  Error details: {e}")
             return None
         except Exception as e:
-            print(f"Error publishing community note: {e}")
+            print(f"❌ [DKG publish] Error publishing community note: {e}")
             import traceback
             traceback.print_exc()
             return None

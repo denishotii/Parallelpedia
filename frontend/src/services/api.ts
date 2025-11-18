@@ -25,7 +25,7 @@ export const compareTopic = async (topicId: string): Promise<TopicAnalysis> => {
   return response.data;
 };
 
-export const publishCommunityNote = async (topicId: string): Promise<{ success: boolean; asset_id: string; community_note: CommunityNote }> => {
+export const publishCommunityNote = async (topicId: string): Promise<{ success: boolean; ual: string; asset_id: string; verification_url: string; community_note: CommunityNote }> => {
   const response = await api.post(`/api/topics/${topicId}/community-note`);
   return response.data;
 };
