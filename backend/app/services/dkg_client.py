@@ -1,5 +1,6 @@
 """DKG client for interacting with OriginTrail DKG."""
 import os
+import json
 import httpx
 from typing import Optional
 from app.models import CommunityNote
@@ -16,7 +17,15 @@ class DKGClient:
             base_url: Base URL for DKG node (defaults to DKG_BASE_URL env var or localhost:9200)
         """
         self.base_url = base_url or os.getenv("DKG_BASE_URL", "http://localhost:9200")
-        self.client = httpx.AsyncClient(timeout=30.0)
+        # Increased timeout for DKG publishing (blockchain operations can take 60-900 seconds)
+        # Set explicit timeouts: connect, read, write, pool
+        timeout_config = httpx.Timeout(
+            connect=30.0,  # 30 seconds to establish connection
+            read=900.0,    # 15 minutes to read response (blockchain ops can be very slow)
+            write=30.0,    # 30 seconds to write request
+            pool=30.0      # 30 seconds to get connection from pool
+        )
+        self.client = httpx.AsyncClient(timeout=timeout_config)
     
     async def find_grok_article_ual(self, topic_id: str) -> Optional[str]:
         """
@@ -152,14 +161,49 @@ class DKGClient:
                     "provenance": provenance or {}
                 }
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as http_err:
+                # Bubble up richer server error details for easier debugging
+                body_text = ""
+                try:
+                    body_text = response.text
+                except Exception:
+                    pass
+                print(f"[DKG publish] HTTP error {http_err.response.status_code}: {body_text}")
+                return None
             result = response.json()
             
-            if result.get("success") and result.get("ual"):
-                return result["ual"]
+            # Log the full response from DKG node server
+            print("=" * 80)
+            print("[DKG publish] Full response from DKG node server:")
+            print(json.dumps(result, indent=2))
+            print("=" * 80)
             
-            error_msg = result.get("error", "Unknown error")
-            print(f"Failed to publish: {error_msg}")
+            # Extract UAL from response
+            ual = result.get("ual") or result.get("UAL") or result.get("asset_id")
+            
+            if result.get("success") and ual:
+                print(f"✅ [DKG publish] SUCCESS! Community Note published with UAL: {ual}")
+                print(f"📋 [DKG publish] UAL (Unique Asset Locator): {ual}")
+                print(f"🔗 [DKG publish] Verify asset: GET http://localhost:9200/api/dkg/assets?ual={ual}")
+                return ual
+            
+            # Log any error from plugin
+            print(f"❌ [DKG publish] Failed: {result}")
+            if not result.get("success"):
+                error_msg = result.get("error", "Unknown error")
+                print(f"   Error message: {error_msg}")
+            return None
+        except httpx.ReadTimeout as e:
+            print(f"[DKG publish] ReadTimeout: The DKG node server took too long to respond.")
+            print(f"  This usually means the OT-Node connection is slow or the blockchain operation is taking longer than expected.")
+            print(f"  Current timeout: 15 minutes. If this persists, the DKG node server may need more time.")
+            print(f"  Error details: {e}")
+            return None
+        except httpx.TimeoutException as e:
+            print(f"[DKG publish] TimeoutException: Request timed out.")
+            print(f"  Error details: {e}")
             return None
         except Exception as e:
             print(f"Error publishing community note: {e}")

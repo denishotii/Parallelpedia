@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState, useRef } from 'react';
 import { compareTopic, publishCommunityNote } from './services/api';
 import { TopicAnalysis, Article, SegmentLabel } from './types';
 import { TrustScore } from './components/TrustScore';
 import logoFull from './logo/logo-with-name.svg';
 import { SegmentComparison } from './components/SegmentComparison';
-import { ArticleView } from './components/ArticleView';
+import { HighlightedArticleView } from './components/HighlightedArticleView';
 
 function App() {
   const [topicId, setTopicId] = useState('');
@@ -16,6 +16,10 @@ function App() {
   const [published, setPublished] = useState(false);
   type AnalysisTab = 'evidence' | 'conflicts' | 'alignments';
   const [activeTab, setActiveTab] = useState<AnalysisTab>('evidence');
+  
+  // Refs for synchronized scrolling
+  const grokContainerRef = useRef<HTMLDivElement>(null);
+  const wikiContainerRef = useRef<HTMLDivElement>(null);
 
   const handleCompare = async () => {
     if (!topicId.trim()) return;
@@ -174,8 +178,24 @@ function App() {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Article Comparison</h3>
                 <div className="grid grid-cols-2 gap-6">
-                  <ArticleView article={grokArticle} title="Grokipedia" />
-                  <ArticleView article={wikiArticle} title="Wikipedia" />
+                  <HighlightedArticleView
+                    article={grokArticle}
+                    title="Grokipedia"
+                    comparisons={analysis?.segment_comparisons || []}
+                    source="grok"
+                    scrollContainerRef={wikiContainerRef}
+                    containerRef={grokContainerRef}
+                    syncScroll={true}
+                  />
+                  <HighlightedArticleView
+                    article={wikiArticle}
+                    title="Wikipedia"
+                    comparisons={analysis?.segment_comparisons || []}
+                    source="wiki"
+                    scrollContainerRef={grokContainerRef}
+                    containerRef={wikiContainerRef}
+                    syncScroll={true}
+                  />
                 </div>
               </div>
             )}
