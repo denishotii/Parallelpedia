@@ -57,3 +57,22 @@ code {
   /* Smooth scrolling */
   scroll-behavior: smooth;
 }
+
+/* Gradient animation for hero */
+.animate-gradient {
+  background: linear-gradient(120deg, #dbeafe, #e0e7ff, #fce7f3, #dbeafe);
+  background-size: 200% 200%;
+  animation: gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient {
+    animation: none;
+  }
+}

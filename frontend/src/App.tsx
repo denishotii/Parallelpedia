@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { compareTopic, publishCommunityNote } from './services/api';
 import { TopicAnalysis, Article, SegmentLabel } from './types';
 import { TrustScore } from './components/TrustScore';
@@ -7,6 +8,7 @@ import { SegmentComparison } from './components/SegmentComparison';
 import { HighlightedArticleView } from './components/HighlightedArticleView';
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [topicId, setTopicId] = useState('');
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<TopicAnalysis | null>(null);
@@ -21,8 +23,60 @@ function App() {
   const grokContainerRef = useRef<HTMLDivElement>(null);
   const wikiContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleCompare = async () => {
-    if (!topicId.trim()) return;
+  // Handle topic query parameter
+  useEffect(() => {
+    const topicParam = searchParams.get('topic');
+    if (topicParam && !analysis) {
+      setTopicId(topicParam);
+      // Auto-trigger comparison after a short delay
+      const timer = setTimeout(async () => {
+        const topicToCompare = topicParam;
+        if (!topicToCompare) return;
+
+        setLoading(true);
+        setAnalysis(null);
+        setPublished(false);
+        setGrokArticle(null);
+        setWikiArticle(null);
+
+        try {
+          const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+          
+          const [grokResponse, wikiResponse] = await Promise.all([
+            fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicToCompare)}/grok`).catch(() => null),
+            fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicToCompare)}/wikipedia`).catch(() => null)
+          ]);
+
+          if (grokResponse && grokResponse.ok) {
+            const grokData = await grokResponse.json();
+            setGrokArticle(grokData);
+          }
+          
+          if (wikiResponse && wikiResponse.ok) {
+            const wikiData = await wikiResponse.json();
+            setWikiArticle(wikiData);
+          }
+
+          const result = await compareTopic(topicToCompare);
+          setAnalysis(result);
+          
+          setGrokArticle(prev => prev ? { ...prev, title: result.grok_title } : null);
+          setWikiArticle(prev => prev ? { ...prev, title: result.wiki_title } : null);
+        } catch (error: any) {
+          console.error('Error comparing topic:', error);
+          const errorMessage = error?.message || 'Unknown error occurred';
+          alert(`Error comparing topic: ${errorMessage}\n\nPlease check:\n- Topic ID is correct (e.g., "Climate_change")\n- Backend is running\n- Articles exist on both platforms`);
+        } finally {
+          setLoading(false);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, analysis]);
+
+  const handleCompare = async (topic?: string) => {
+    const topicToCompare = topic || topicId.trim();
+    if (!topicToCompare) return;
 
     setLoading(true);
     setAnalysis(null);
@@ -35,8 +89,8 @@ function App() {
       const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
       
       const [grokResponse, wikiResponse] = await Promise.all([
-        fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicId.trim())}/grok`).catch(() => null),
-        fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicId.trim())}/wikipedia`).catch(() => null)
+        fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicToCompare)}/grok`).catch(() => null),
+        fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicToCompare)}/wikipedia`).catch(() => null)
       ]);
 
       // Set articles if available
@@ -51,7 +105,7 @@ function App() {
       }
 
       // Then run comparison
-      const result = await compareTopic(topicId.trim());
+      const result = await compareTopic(topicToCompare);
       setAnalysis(result);
       
       // Update articles with titles from analysis if we have them
