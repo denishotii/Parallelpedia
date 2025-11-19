@@ -114,12 +114,14 @@ export default function LandingPage() {
             <img src={logoFull} alt="Parallelpedia" className="h-8 md:h-9 lg:h-10 w-auto" />
             <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 font-semibold">beta</span>
           </div>
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            <a href="#problem" className="text-gray-600 hover:text-gray-900 transition-colors">Problem</a>
-            <a href="#solution" className="text-gray-600 hover:text-gray-900 transition-colors">Solution</a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How it works</a>
-            <a href="#technology" className="text-gray-600 hover:text-gray-900 transition-colors">Technology</a>
-            <a href="#impact" className="text-gray-600 hover:text-gray-900 transition-colors">Impact</a>
+          <div className="hidden md:flex items-center gap-5 text-sm">
+            <a href="#problem" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">Problem</a>
+            <a href="#solution" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">Solution</a>
+            <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">How It Works</a>
+            <a href="#technology" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">AI Engine</a>
+            <a href="#dkg" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">DKG</a>
+            <a href="#impact" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">Impact</a>
+            <a href="#architecture" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">Architecture</a>
             <button
               onClick={() => navigate('/app')}
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition-all transform hover:scale-105"
