@@ -133,7 +133,11 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Backend API will be available at `http://localhost:8000`
-- **API Docs**: `http://localhost:8000/docs`
+
+**📚 API Documentation**: Visit `http://localhost:8000/docs` for interactive Swagger UI documentation where you can:
+- View all available endpoints
+- See request/response schemas
+- Test API endpoints directly from the browser
 
 **Keep this terminal running!**
 
@@ -163,6 +167,10 @@ Frontend will be available at `http://localhost:5173`
 3. Click "Compare" to analyze
 4. Review the trust score and segment analysis
 5. Click "Publish Community Note" to publish to DKG
+
+**API Documentation**: 
+- **Backend API Docs (Swagger UI)**: `http://localhost:8000/docs` - Interactive API documentation with request/response examples
+- **DKG Plugin API Docs**: `http://localhost:9200/api-docs` - DKG Node plugin endpoints
 
 ## 📋 Complete Setup Checklist
 
@@ -259,13 +267,17 @@ See [`JSON-LD_Example_Structure.md`](JSON-LD_Example_Structure.md) for example C
 
 ### Backend API (`http://localhost:8000`)
 
+**📚 Interactive API Documentation**: `http://localhost:8000/docs` (Swagger UI)
+
+Available endpoints:
 - `GET /api/topics/{topic_id}/grok` - Get Grokipedia article
 - `GET /api/topics/{topic_id}/wikipedia` - Get Wikipedia article
 - `POST /api/topics/{topic_id}/compare` - Compare articles and generate analysis
 - `POST /api/topics/{topic_id}/community-note` - Publish Community Note to DKG
 - `GET /api/topics/{topic_id}/community-note` - Get Community Note
 - `GET /api/health` - Health check
-- **Swagger UI**: `http://localhost:8000/docs`
+
+**Note**: Visit `http://localhost:8000/docs` for interactive API documentation with request/response examples and the ability to test endpoints directly.
 
 ### DKG Plugin API (`http://localhost:9200`)
 
