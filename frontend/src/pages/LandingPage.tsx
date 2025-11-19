@@ -222,11 +222,12 @@ export default function LandingPage() {
                 <motion.a
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  href="https://github.com/denishotii/dkg-plugin-parallelpedia"
+                  href="https://github.com/denishotii/Parallelpedia"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-800 font-semibold bg-white hover:bg-gray-50 transition-all shadow-md"
                 >
+                  <Github className="w-4 h-4 inline mr-2" />
                   View on GitHub
                 </motion.a>
               </div>
@@ -915,14 +916,26 @@ export default function LandingPage() {
                   <span><strong>Knowledge Assets:</strong> Community Notes published as discoverable, linked JSON-LD/RDF assets</span>
                 </li>
               </ul>
-              <a
-                href="https://github.com/denishotii/dkg-plugin-parallelpedia"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:underline"
-              >
-                View Plugin on GitHub <ArrowRight className="w-4 h-4" />
-              </a>
+              <div className="space-y-2">
+                <a
+                  href="https://github.com/denishotii/dkg-plugin-parallelpedia"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:underline"
+                >
+                  View Plugin on GitHub <ArrowRight className="w-4 h-4" />
+                </a>
+                <div className="text-xs text-gray-500">
+                  <a
+                    href="https://github.com/denishotii/Parallelpedia"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Main Repository (Frontend + Backend)
+                  </a>
+                </div>
+              </div>
               
               {/* JSON-LD Example */}
               <div className="mt-6 p-4 bg-gray-900 rounded-lg border border-gray-700">
@@ -1438,15 +1451,27 @@ export default function LandingPage() {
                 <ExternalLink className="w-4 h-4" />
                 Open App
               </a>
-              <a 
-                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors" 
-                href="https://github.com/denishotii/dkg-plugin-parallelpedia"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="w-4 h-4" />
-                GitHub
-              </a>
+              <div className="flex items-center gap-3">
+                <a 
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors" 
+                  href="https://github.com/denishotii/Parallelpedia"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="w-4 h-4" />
+                  Main Repo
+                </a>
+                <span className="text-gray-300">|</span>
+                <a 
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-purple-600 transition-colors" 
+                  href="https://github.com/denishotii/dkg-plugin-parallelpedia"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="w-4 h-4" />
+                  Plugin
+                </a>
+              </div>
               <a 
                 className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-purple-600 transition-colors" 
                 href="https://explorer.origintrail.io"
