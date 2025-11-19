@@ -1,4 +1,6 @@
+# Example 1
 [DKG publish] JSON-LD structure:
+```json
 {
   "@context": {
     "@vocab": "https://schema.org/",
@@ -40,3 +42,51 @@
   "wikiTitle": "Elon Musk",
   "dateCreated": "2025-11-19T20:20:55.208299Z"
 }
+```
+
+
+# Example 2
+[DKG publish] JSON-LD structure:
+```json
+{
+  "@context": {
+    "@vocab": "https://schema.org/",
+    "parallelpedia": "https://parallelpedia.org/schema/"
+  },
+  "@type": "CommunityNote",
+  "topicId": "Conservapedia",
+  "trustScore": 78.79913480478649,
+  "summary": "Moderate trust score: Content mostly aligns but has some gaps.",
+  "labelsCount": {
+    "aligned": 26,
+    "missing_context": 166,
+    "conflict": 2,
+    "unsupported": 0
+  },
+  "keyExamples": [
+    {
+      "text": "Fact-checked by Grok\n\n3 weeks ago\n\nConservapedia\n\nConservapedia is an English-language, wiki-based online encyclopedia founded on November 21, 2006, by attorney and educator Andrew Schlafly, son of co",
+      "label": "aligned"
+    },
+    {
+      "text": "It operates as a conservative alternative to Wikipedia, explicitly adopting a viewpoint that credits conservatism and Christianity rather than feigning neutrality, while enforcing family-friendly poli",
+      "label": "missing_context"
+    },
+    {
+      "text": "The project's inception stemmed from observations of systemic liberal bias in Wikipedia, corroborated by multiple studies documenting skewed content and editor demographics favoring left-leaning persp",
+      "label": "missing_context"
+    },
+    {
+      "text": "Conservapedia's editing principles prioritize empirical conservatism, such as biblical accuracy over atheistic interpretations of science, and include features like a vast collection of articles on at",
+      "label": "missing_context"
+    },
+    {
+      "text": "Notable for initiatives like the Conservative Bible Project, which seeks a translation untainted by modern liberal influences, Conservapedia has maintained over 58,000 articles despite a small active ",
+      "label": "missing_context"
+    }
+  ],
+  "grokTitle": "Conservapedia",
+  "wikiTitle": "Conservapedia",
+  "dateCreated": "2025-11-19T21:07:17.174873Z"
+}
+```
