@@ -165,8 +165,8 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link to="/app">
-                <img src={logoFull} alt="Parallelpedia" className="h-10 md:h-12 w-auto" />
+              <Link to="/">
+                <img src={logoFull} alt="Parallelpedia" className="h-10 md:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
               </Link>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">beta</span>
             </div>

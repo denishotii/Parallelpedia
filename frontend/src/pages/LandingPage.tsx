@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   Brain, AlertTriangle, Search, Shield, Zap, Database, 
@@ -111,7 +111,9 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoFull} alt="Parallelpedia" className="h-8 md:h-9 lg:h-10 w-auto" />
+            <Link to="/">
+              <img src={logoFull} alt="Parallelpedia" className="h-8 md:h-9 lg:h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+            </Link>
             <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 font-semibold">beta</span>
           </div>
           <div className="hidden md:flex items-center gap-5 text-sm">
@@ -122,6 +124,13 @@ export default function LandingPage() {
             <a href="#dkg" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">DKG</a>
             <a href="#impact" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">Impact</a>
             <a href="#architecture" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">Architecture</a>
+            <button
+              onClick={() => navigate('/community-notes')}
+              className="px-4 py-2 rounded-lg text-purple-600 font-semibold hover:text-purple-700 transition-colors flex items-center gap-2"
+            >
+              <Network className="w-4 h-4" />
+              <span>Community Notes</span>
+            </button>
             <button
               onClick={() => navigate('/app')}
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition-all transform hover:scale-105"
@@ -218,6 +227,15 @@ export default function LandingPage() {
                   className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all"
                 >
                   Open Live App
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/community-notes')}
+                  className="px-6 py-3 rounded-lg bg-purple-600 text-white font-semibold shadow-lg hover:bg-purple-700 transition-all flex items-center gap-2"
+                >
+                  <Network className="w-4 h-4" />
+                  <span>View Community Notes</span>
                 </motion.button>
                 <motion.a
                   whileHover={{ scale: 1.05 }}
@@ -885,8 +903,18 @@ export default function LandingPage() {
                 </React.Fragment>
               ))}
                 </div>
-            <div className="mt-8 text-center text-sm text-gray-600">
-              <p>Community Notes published as verifiable Knowledge Assets on OriginTrail blockchain</p>
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-600 mb-4">Community Notes published as verifiable Knowledge Assets on OriginTrail blockchain</p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/community-notes')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-600 text-white font-semibold shadow-lg hover:bg-purple-700 transition-all"
+              >
+                <Network className="w-5 h-5" />
+                <span>Explore All Community Notes</span>
+                <ArrowRight className="w-4 h-4" />
+              </motion.button>
             </div>
           </motion.div>
 
@@ -1424,14 +1452,27 @@ export default function LandingPage() {
           <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">
             Type any topic and we'll show you how AI encyclopedias agree — or don't. Get instant trust scores and verifiable Community Notes.
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/app')}
-            className="px-10 py-5 rounded-xl bg-white text-blue-600 font-bold shadow-2xl hover:shadow-3xl transition-all text-lg"
-          >
-            Open Live App
-          </motion.button>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/app')}
+              className="px-10 py-5 rounded-xl bg-white text-blue-600 font-bold shadow-2xl hover:shadow-3xl transition-all text-lg"
+            >
+              Open Live App
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/community-notes')}
+              className="px-10 py-5 rounded-xl bg-purple-500/90 text-white font-bold shadow-2xl hover:shadow-3xl hover:bg-purple-500 transition-all text-lg border-2 border-white/30"
+            >
+              <span className="flex items-center gap-2">
+                <Network className="w-5 h-5" />
+                View Community Notes
+              </span>
+            </motion.button>
+          </div>
           <div className="mt-10 text-sm text-blue-100">
             Built by Team Parallelpedia for the OriginTrail Scaling Trust & AI Hackathon
           </div>
@@ -1450,6 +1491,13 @@ export default function LandingPage() {
               >
                 <ExternalLink className="w-4 h-4" />
                 Open App
+              </a>
+              <a 
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-purple-600 transition-colors" 
+                href="/community-notes"
+              >
+                <Network className="w-4 h-4" />
+                Community Notes
               </a>
               <div className="flex items-center gap-3">
                 <a 
