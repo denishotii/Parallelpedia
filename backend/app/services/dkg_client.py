@@ -146,12 +146,6 @@ class DKGClient:
             "dateCreated": datetime.utcnow().isoformat() + "Z"
         }
         
-        # Print JSON-LD structure for inspection
-        print("=" * 80)
-        print("[DKG publish] JSON-LD structure:")
-        print(json.dumps(jsonld, indent=2))
-        print("=" * 80)
-        
         try:
             # Use the Parallelpedia plugin API endpoint for publishing
             publish_url = f"{self.base_url}/parallelpedia/community-notes"

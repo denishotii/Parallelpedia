@@ -35,3 +35,26 @@ export const getCommunityNote = async (topicId: string): Promise<CommunityNote> 
   return response.data;
 };
 
+export interface CommunityNoteListItem {
+  topicId: string;
+  trustScore: number;
+  summary: string;
+  grokTitle: string;
+  wikiTitle: string;
+  createdAt: string;
+  ual: string | null;
+  asset?: string | null;
+}
+
+export interface CommunityNotesResponse {
+  found: boolean;
+  count: number;
+  notes: CommunityNoteListItem[];
+}
+
+export const getAllCommunityNotes = async (): Promise<CommunityNotesResponse> => {
+  // Fetch from backend API which proxies to DKG
+  const response = await api.get('/api/community-notes');
+  return response.data;
+};
+

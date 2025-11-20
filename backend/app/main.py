@@ -1,4 +1,5 @@
 """Main FastAPI application for Parallelpedia."""
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -235,6 +236,30 @@ async def get_community_note(topic_id: str):
         raise HTTPException(status_code=404, detail="Community note not found")
     
     return note
+
+
+@app.get("/api/community-notes")
+async def list_community_notes(limit: int = 100):
+    """List all Community Notes from DKG."""
+    if not dkg_client:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        # Use the DKG plugin endpoint directly
+        import httpx
+        base_url = os.getenv("DKG_BASE_URL", "http://localhost:9200")
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{base_url}/parallelpedia/community-notes",
+                params={"limit": limit}
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch community notes: {str(e)}"
+        )
 
 
 @app.get("/api/health")
