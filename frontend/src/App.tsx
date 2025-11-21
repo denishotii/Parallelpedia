@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Search, Scale, Network, ArrowRight, CheckCircle2, ExternalLink, Copy
+  Search, Scale, Network, ArrowRight, CheckCircle2, ExternalLink, Copy, Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { compareTopic, publishCommunityNote } from './services/api';
@@ -189,22 +189,125 @@ function App() {
         {/* Search Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex gap-4">
-            <input
-              type="text"
-              value={topicId}
-              onChange={(e) => setTopicId(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCompare()}
-              placeholder="Enter topic (e.g., 'Climate change', 'Artificial intelligence')"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={topicId}
+                onChange={(e) => setTopicId(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleCompare()}
+                placeholder="Enter topic (e.g., 'Climate change', 'Artificial intelligence')"
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+              />
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                </motion.div>
+              )}
+            </div>
             <button
               onClick={() => handleCompare()}
               disabled={loading || !topicId.trim()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold transition-all flex items-center gap-2 min-w-[120px] justify-center"
             >
-              {loading ? 'Comparing...' : 'Compare'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Comparing...</span>
+                </>
+              ) : (
+                'Compare'
+              )}
             </button>
           </div>
+          
+          {/* Loading Animation Overlay */}
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-6 pt-6 border-t border-gray-200"
+            >
+              <div className="flex flex-col items-center justify-center py-8">
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  className="relative"
+                >
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <Scale className="w-8 h-8 text-white" />
+                  </div>
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-4 border-blue-200"
+                    animate={{ 
+                      scale: [1, 1.5, 1.5],
+                      opacity: [0.5, 0, 0]
+                    }}
+                    transition={{ 
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "easeOut"
+                    }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-4 border-purple-200"
+                    animate={{ 
+                      scale: [1, 1.3, 1.3],
+                      opacity: [0.5, 0, 0]
+                    }}
+                    transition={{ 
+                      duration: 1.5,
+                      repeat: Infinity,
+                      delay: 0.3,
+                      ease: "easeOut"
+                    }}
+                  />
+                </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 text-lg font-semibold text-gray-700"
+                >
+                  Analyzing articles...
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="mt-2 text-sm text-gray-500"
+                >
+                  Comparing content from Grokipedia and Wikipedia
+                </motion.p>
+                <div className="mt-6 w-full max-w-md">
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Results */}
