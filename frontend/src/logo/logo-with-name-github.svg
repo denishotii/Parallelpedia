@@ -17,8 +17,8 @@
 
   <!-- WORDMARK -->
   <g transform="translate(52,14)">
-    <!-- Light background highlight -->
-    <rect x="-4" y="2" width="140" height="26" rx="6" fill="#FFFFFF" opacity="0.95"/>
+    <!-- Light background highlight for text only -->
+    <rect x="-4" y="2" width="140" height="26" rx="6" fill="#FFFFFF" opacity="0.25"/>
     <text x="0" y="22"
           font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
           font-size="22"
