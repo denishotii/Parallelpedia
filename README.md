@@ -1,5 +1,5 @@
 <p align="left">
-  <img src="frontend/src/logo/logo.png" alt="Parallelpedia" width="200px" height="200px" />
+  <img src="frontend/src/logo/logo-with-name-github.svg" alt="Parallelpedia" width="200px" />
 </p>
 
 # Parallelpedia
