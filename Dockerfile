@@ -47,11 +47,11 @@ COPY --from=frontend /app/dist /var/www/html
 
 # Nginx config
 RUN echo 'server { \
-    listen 80; \
+    listen 8000; \
     root /var/www/html; \
     index index.html; \
     location /api { \
-        proxy_pass http://localhost:8000; \
+        proxy_pass http://localhost:5000; \
         proxy_set_header Host $host; \
     } \
     location / { \
@@ -63,8 +63,8 @@ ENV ENABLE_DKG_LOOKUP=0 PYTHONUNBUFFERED=1
 
 # Start script
 RUN echo '#!/bin/bash\n\
-cd /app/backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 &\n\
+cd /app/backend && uvicorn app.main:app --host 0.0.0.0 --port 5000 &\n\
 nginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
 
-EXPOSE 80
+EXPOSE 8000
 CMD ["/start.sh"]

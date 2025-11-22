@@ -52,7 +52,7 @@ function App() {
         setWikiArticle(null);
 
         try {
-          const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+          const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
           
           const [grokResponse, wikiResponse] = await Promise.all([
             fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicToCompare)}/grok`).catch(() => null),
@@ -99,7 +99,7 @@ function App() {
 
     try {
       // First, fetch both articles separately to display them
-      const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
       
       const [grokResponse, wikiResponse] = await Promise.all([
         fetch(`${apiUrl}/api/topics/${encodeURIComponent(topicToCompare)}/grok`).catch(() => null),

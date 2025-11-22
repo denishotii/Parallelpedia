@@ -1,7 +1,9 @@
 import axios from 'axios';
 import type { Article, TopicAnalysis, CommunityNote } from '../types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+// Use relative URL in production (nginx proxies /api to backend on port 5000)
+// Fallback to localhost:8000 for local development without nginx
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
