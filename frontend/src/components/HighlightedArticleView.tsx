@@ -25,7 +25,6 @@ export const HighlightedArticleView: React.FC<HighlightedArticleViewProps> = Rea
   comparisons = [],
   source = 'grok',
   scrollContainerRef,
-  onScroll,
   syncScroll = false,
   containerRef: externalContainerRef
 }) => {
