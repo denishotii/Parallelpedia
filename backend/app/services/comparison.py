@@ -3,7 +3,30 @@ import os
 import re
 from typing import List, Dict, Optional, Tuple, Set
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+
+# Simple cosine similarity using numpy (replaces sklearn)
+def cosine_similarity(a, b):
+    """Compute cosine similarity between two arrays (replaces sklearn.metrics.pairwise.cosine_similarity)."""
+    # Handle sparse matrices by converting to dense if needed
+    if hasattr(a, 'toarray'):
+        a = a.toarray()
+    if hasattr(b, 'toarray'):
+        b = b.toarray()
+    
+    a = np.asarray(a)
+    b = np.asarray(b)
+    
+    # Ensure 2D
+    if a.ndim == 1:
+        a = a.reshape(1, -1)
+    if b.ndim == 1:
+        b = b.reshape(1, -1)
+    
+    a_norm = np.linalg.norm(a, axis=1, keepdims=True)
+    b_norm = np.linalg.norm(b, axis=1, keepdims=True)
+    a_normalized = a / (a_norm + 1e-8)
+    b_normalized = b / (b_norm + 1e-8)
+    return np.dot(a_normalized, b_normalized.T)
 
 # Optional imports with fallbacks
 try:
@@ -432,15 +455,22 @@ class ComparisonService:
         embeddings = self._get_embeddings(all_segments)
         
         if embeddings is None:
-            # Fallback to basic TF-IDF if embeddings unavailable
-            print("Warning: Embeddings unavailable, using basic similarity")
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            vectorizer = TfidfVectorizer(max_features=3000, stop_words='english')
-            corpus = wiki_segments + grok_segments
-            tfidf = vectorizer.fit_transform(corpus)
-            wiki_matrix = tfidf[:len(wiki_segments)]
-            grok_matrix = tfidf[len(wiki_segments):]
-            sim_matrix = cosine_similarity(grok_matrix, wiki_matrix)
+            # Fallback to simple word overlap if embeddings unavailable
+            print("Warning: Embeddings unavailable, using simple word overlap similarity")
+            # Simple word-based similarity (Jaccard-like)
+            def simple_similarity(seg1, seg2):
+                words1 = set(seg1.lower().split())
+                words2 = set(seg2.lower().split())
+                if not words1 or not words2:
+                    return 0.0
+                intersection = len(words1 & words2)
+                union = len(words1 | words2)
+                return intersection / union if union > 0 else 0.0
+            
+            sim_matrix = np.array([
+                [simple_similarity(grok_seg, wiki_seg) for wiki_seg in wiki_segments]
+                for grok_seg in grok_segments
+            ])
         else:
             # Use semantic embeddings
             wiki_embeddings = embeddings[:len(wiki_segments)]

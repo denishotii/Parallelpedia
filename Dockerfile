@@ -17,22 +17,27 @@ RUN apt-get update && \
 
 # Setup backend
 WORKDIR /app/backend
-COPY backend/requirements.txt .
+COPY backend/requirements-minimal.txt ./requirements.txt
 
-# Install dependencies with aggressive cleanup
+# Install dependencies with aggressive cleanup (removed sentence-transformers and scikit-learn)
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     pip cache purge && \
     rm -rf /root/.cache/pip /tmp/* /var/tmp/*
 
-# Download NLP models
-RUN python -m spacy download en_core_web_sm || true && \
-    python -c "import nltk; nltk.download('punkt', quiet=True); nltk.download('stopwords', quiet=True)" || true
+# Download only essential NLP models (smaller)
+RUN python -c "import nltk; nltk.download('punkt', quiet=True); nltk.download('stopwords', quiet=True)" || true
 
-# Clean up everything possible
+# Try to download spaCy model (optional - code has fallback)
+RUN python -m spacy download en_core_web_sm || true
+RUN rm -rf /root/.cache/spacy/models 2>/dev/null || true
+
+# Aggressive cleanup - remove everything unnecessary
 RUN rm -rf /root/.cache/* /tmp/* /var/tmp/* && \
     find /usr/local/lib/python3.11/site-packages -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
-    find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete 2>/dev/null || true
+    find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete 2>/dev/null || true && \
+    find /usr/local/lib/python3.11/site-packages -name "*.pyo" -delete 2>/dev/null || true && \
+    rm -rf /root/nltk_data/corpora/wordnet* /root/nltk_data/corpora/omw* 2>/dev/null || true
 
 COPY backend/app/ ./app/
 RUN mkdir -p ./data
