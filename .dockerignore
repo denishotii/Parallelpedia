@@ -1,0 +1,67 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Node modules (will be installed in container)
+node_modules/
+**/node_modules/
+
+# Python virtual environments
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# DKG Node specific
+dkg-node/apps/agent/dkg.db
+dkg-node/apps/agent/data/
+dkg-node/dkg-engine/current/
+dkg-node/dkg-engine/*/node_modules/
+dkg-node/dkg-engine/*/blazegraph.jnl
+dkg-node/dkg-engine/*/rules.log
+
+# Test files
+**/tests/
+**/test/
+*.test.*
+*.spec.*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
