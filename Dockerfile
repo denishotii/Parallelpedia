@@ -56,7 +56,8 @@ RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')" 
 
 # Copy backend application code
 COPY backend/app/ ./app/
-COPY backend/data/ ./data/ 2>/dev/null || true
+# Create data directory (will be empty if no files to copy)
+RUN mkdir -p ./data
 
 # ============================================================================
 # Stage 3: Production Image
@@ -69,11 +70,18 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from backend-setup
-COPY --from=backend-setup /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=backend-setup /usr/local/bin /usr/local/bin
+# Copy requirements and reinstall Python dependencies (more reliable than copying site-packages)
+COPY --from=backend-setup /app/backend/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+
+# Download spaCy language model
+RUN python -m spacy download en_core_web_sm || true
+
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')" || true
 
 # Copy backend application
 COPY --from=backend-setup /app/backend /app/backend
@@ -87,70 +95,74 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=8000
 
 # Create nginx configuration
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    \
-    # Proxy API requests to backend \
-    location /api { \
-        proxy_pass http://localhost:8000; \
-        proxy_http_version 1.1; \
-        proxy_set_header Upgrade $http_upgrade; \
-        proxy_set_header Connection "upgrade"; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-        proxy_cache_bypass $http_upgrade; \
-    } \
-    \
-    # Gzip compression \
-    gzip on; \
-    gzip_vary on; \
-    gzip_min_length 1024; \
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json; \
-    \
-    # SPA routing - serve index.html for all routes \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    \
-    # Cache static assets \
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ { \
-        expires 1y; \
-        add_header Cache-Control "public, immutable"; \
-    } \
-    \
-    # Security headers \
-    add_header X-Frame-Options "SAMEORIGIN" always; \
-    add_header X-Content-Type-Options "nosniff" always; \
-    add_header X-XSS-Protection "1; mode=block" always; \
-}' > /etc/nginx/conf.d/default.conf
+RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Proxy API requests to backend
+    location /api {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
+
+    # SPA routing - serve index.html for all routes
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+}
+EOF
 
 # Create supervisor configuration to run both services
-RUN echo '[supervisord] \
-nodaemon=true \
-user=root \
-logfile=/var/log/supervisor/supervisord.log \
-pidfile=/var/run/supervisord.pid \
-\
-[program:backend] \
-command=uvicorn app.main:app --host 0.0.0.0 --port 8000 \
-directory=/app/backend \
-autostart=true \
-autorestart=true \
-stderr_logfile=/var/log/supervisor/backend.err.log \
-stdout_logfile=/var/log/supervisor/backend.out.log \
-environment=ENABLE_DKG_LOOKUP="0",PYTHONUNBUFFERED="1" \
-\
-[program:nginx] \
-command=nginx -g "daemon off;" \
-autostart=true \
-autorestart=true \
-stderr_logfile=/var/log/supervisor/nginx.err.log \
-stdout_logfile=/var/log/supervisor/nginx.out.log' > /etc/supervisor/conf.d/supervisord.conf
+RUN cat > /etc/supervisor/conf.d/supervisord.conf << 'EOF'
+[supervisord]
+nodaemon=true
+user=root
+logfile=/var/log/supervisor/supervisord.log
+pidfile=/var/run/supervisord.pid
+
+[program:backend]
+command=uvicorn app.main:app --host 0.0.0.0 --port 8000
+directory=/app/backend
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/backend.err.log
+stdout_logfile=/var/log/supervisor/backend.out.log
+environment=ENABLE_DKG_LOOKUP="0",PYTHONUNBUFFERED="1"
+
+[program:nginx]
+command=nginx -g "daemon off;"
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/nginx.err.log
+stdout_logfile=/var/log/supervisor/nginx.out.log
+EOF
 
 # Create log directories
 RUN mkdir -p /var/log/supervisor
