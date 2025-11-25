@@ -414,10 +414,27 @@ export default function LandingPage() {
               </div>
               <div className="pt-4 border-t border-gray-200">
                 <div className="text-xs text-gray-500 mb-2">Published to OriginTrail DKG</div>
-                <div className="flex items-center gap-2 text-sm text-blue-600">
-                  <Link2 className="w-4 h-4" />
-                  <span className="font-mono">did:dkg:otp:20430/0xcdb2...</span>
-            </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://dkg-testnet.origintrail.io/explore"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                  >
+                    <Link2 className="w-4 h-4" />
+                    <span className="font-mono">did:dkg:otp:20430/0xcdb2...</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <a
+                  href="https://dkg-testnet.origintrail.io/explore"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-700 hover:underline transition-colors"
+                >
+                  <Network className="w-3 h-3" />
+                  <span>View on DKG Explorer</span>
+                </a>
           </div>
         </div>
           </motion.div>
