@@ -1539,7 +1539,7 @@ export default function LandingPage() {
               </div>
               <a 
                 className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-purple-600 transition-colors" 
-                href="https://explorer.origintrail.io"
+                href="https://dkg-testnet.origintrail.io/explore?ual=did%3Adkg%3Aotp%3A20430%2F0xcdb28e93ed340ec10a71bba00a31dbfcf1bd5d37%2F401175"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -1548,7 +1548,7 @@ export default function LandingPage() {
               </a>
               <a 
                 className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-orange-600 transition-colors" 
-                href="https://dorahacks.io"
+                href="https://dorahacks.io/hackathon/origintrail-scaling-trust-ai/detail"
                 target="_blank"
                 rel="noopener noreferrer"
               >
