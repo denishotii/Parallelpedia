@@ -242,6 +242,19 @@ Frontend will be available at `http://localhost:5173`
    - OT-Node → DKG Node Server → Backend → Frontend
    - Each step logs the UAL for verification
 
+### Verifying Published Assets
+
+After publishing a Community Note, you'll receive a UAL (Unique Asset Locator). You can verify and explore published assets using:
+
+- **DKG Explorer**: Visit [DKG Testnet Explorer](https://dkg-testnet.origintrail.io/explore) and search for your UAL to view the published Community Note
+  - Direct link with UAL: `https://dkg-testnet.origintrail.io/explore?ual=YOUR_UAL`
+- **DKG Node API**: `GET http://localhost:9200/api/dkg/assets?ual=YOUR_UAL`
+- **Plugin Endpoint**: `GET http://localhost:9200/parallelpedia/community-notes/TOPIC_ID`
+
+**Example**: If you published a Community Note for "Steve Jobs" and received UAL `did:dkg:otp:20430:0x1234...`, you can:
+- View it on DKG Explorer: `https://dkg-testnet.origintrail.io/explore?ual=did:dkg:otp:20430:0x1234...`
+- Query via API: `curl http://localhost:9200/parallelpedia/community-notes/Elon_Musk`
+
 ### Plugin Location
 
 The Parallelpedia plugin must be cloned from its repository: [https://github.com/denishotii/dkg-plugin-parallelpedia](https://github.com/denishotii/dkg-plugin-parallelpedia)
